@@ -33,6 +33,6 @@ namespace Valve.VR
         
         public Valve.VR.SteamVR_Action_Single Squeeze;
         
-        public Valve.VR.SteamVR_Action_Boolean StartPress;
+        public Valve.VR.SteamVR_Action_Boolean Start_Button;
     }
 }

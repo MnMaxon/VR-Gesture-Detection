@@ -10,56 +10,66 @@ using System.IO;
 public class Drawer : MonoBehaviour {
     
     Hand hand;
-    Color[] colors = { Color.red, Color.blue, Color.green, Color.black };
     List<GameObject> spheres = new List<GameObject>();
-    public List<float> locs = new List<float>();
-    int curColor = 0;
+    public List<Vector3> locs = new List<Vector3>();
     bool triggerPressed = false;
     const int places = 1000;
     System.IO.StreamReader file = null;
     const string basepath = "Assets/Resources/DrawingData/";
     string filepath = null;
-    bool fake = false;
-    float[] guess = new float[2];
-    int attempt = 0;
+    public float[] guess = new float[SymbolHandler.getSymbolAmount()];
+    public int attempt = 0;
+    public bool simulated = false;
+    public bool drawOnFrame = true;
+    public bool drawn = false;
+    bool randomType = false;
+    public int maxGuess = 0;
+    public GameObject textObject = null;
+    public bool runDebugText = true;
+    public TextMesh textMesh = null;
+    int clears = 0;
+    int[] wins = new int[SymbolHandler.getSymbolAmount()];
+    int[] losses = new int[SymbolHandler.getSymbolAmount()];
+    int[] thousandWins = new int[SymbolHandler.getSymbolAmount()];
+    int[] thousandLosses = new int[SymbolHandler.getSymbolAmount()];
+    int[] thousandWinsOld = new int[SymbolHandler.getSymbolAmount()];
+    int[] thousandLossesOld = new int[SymbolHandler.getSymbolAmount()];
+	public bool showAvgPlane = false;
 
-    string randomDirec()
-    {
-        string[] direcs = Directory.GetDirectories(basepath);
-        return direcs[UnityEngine.Random.Range(0, direcs.Length)] + "/";
-    }
 
-    string randomFile(string direc)
-    {
-        DirectoryInfo direcInfo = new DirectoryInfo(direc);
-        FileInfo[] Files = direcInfo.GetFiles("*.log");
-        return direc + Files[UnityEngine.Random.Range(0, Files.Length)].Name;
-    }
-
-    string getFile() {
-        string type;
-        if (attempt == 0) return randomFile(basepath + "/Circle/");
-        if (attempt == 1) return randomFile(basepath + "/Square/");
-        return randomFile(randomDirec());
-    }
 
     // Use this for initialization
-    void Start () {
-        for (int i; i < guess.Length; i++) guess[i] = 0;
-        if (filepath == null) filepath = getFile();
-        file = new System.IO.StreamReader(filepath);
+    void Start ()
+    {
+        for (int i = 0; i < wins.Length; i++) wins[i] = 0;
+        for (int i = 0; i < losses.Length; i++) losses[i] = 0;
+        if(textObject!=null) textMesh = textObject.GetComponent(typeof(TextMesh)) as TextMesh;
+        ClearSpheres();
     }
 	
 	// Update is called once per frame
 	void Update ()
     {
-        if (!SpawnNext()) {
-            ClearSpheres();
-            file.Close();
-            filepath = getFile();
-            file = new System.IO.StreamReader(filepath);
-        }
-    }
+        if (simulated) return;
+        if (drawOnFrame) {
+            if (showAvgPlane && locs.Count != 0) {
+                Plane plane = SymbolHandler.averagePlane(locs);
+                Debug.DrawLine(locs[0] + plane.normal * 10000, locs[0] + plane.normal * -10000, Color.green);
+            }
+            if (!SpawnNext()) ClearSpheres();
+        } else if (!drawn)
+        {
+			/*
+            if (savedShapes.ContainsKey(filepath)) drawn = true;
+            else spawnAll();
+			*/
+		}
+	}
+
+	public void spawnAll() {
+		while (SpawnNext()) ;
+		drawn = true;
+	}
 
     bool SpawnNext() {
         string line;
@@ -70,26 +80,26 @@ public class Drawer : MonoBehaviour {
             if (!Int32.TryParse(vecVals[0], out x)) x = -1;
             if (!Int32.TryParse(vecVals[1], out y)) y = -1;
             if (!Int32.TryParse(vecVals[2], out z)) z = -1;
-            Debug.Log("x: " +x +", " + vecVals[0], gameObject);
-            Vector3 vec = new Vector3((float) x / (float) places, (float)y / (float)places, (float)z / (float)places)
-                + gameObject.transform.position;
-            if (!fake)
-            {
-                GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                spheres.Add(sphere);
-                sphere.transform.position = vec;
-                float size = .02F;
-                sphere.transform.localScale = new Vector3(size, size, size);
-                MeshRenderer meshRenderer = sphere.GetComponent<MeshRenderer>();
-                meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                meshRenderer.material.color = colors[curColor];
-            }
-            locs.Add(vec.x);
-            locs.Add(vec.y);
-            locs.Add(vec.z);
+            Vector3 vec = new Vector3(x,y,z);
+            if (!simulated)
+                DrawSphere(vec/places + gameObject.transform.position, Color.red);
+            vec = new Vector3(x, y, z);
+            locs.Add(vec);
         }
         else return false;
         return true;
+    }
+
+    void DrawSphere(Vector3 vec, Color color)
+    {
+        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        spheres.Add(sphere);
+        sphere.transform.position = vec;
+        float size = .02F;
+        sphere.transform.localScale = new Vector3(size, size, size);
+        MeshRenderer meshRenderer = sphere.GetComponent<MeshRenderer>();
+        meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        meshRenderer.material.color = color;
     }
 
     IEnumerator Erase(GameObject go, int time)
@@ -107,24 +117,91 @@ public class Drawer : MonoBehaviour {
         }
     }
 
-    void ClearSpheres()
+    public void ClearSpheres()
     {
+        for (int i = 0; i < guess.Length; i++) guess[i] = 0;
         foreach (GameObject go in spheres) Destroy(go);
         spheres.Clear();
         locs.Clear();
-        for (int i; i < guess.Length; i++) guess[i] = 0;
-        attempt = UnityEngine.Random.Range(0, 1);
+        attempt = UnityEngine.Random.Range(0, guess.Length);
+        if (file != null)
+        {
+            file.Close();
+            file = null;
+        }
+        filepath = SymbolHandler.getFile(attempt);
+		if (!File.Exists(SymbolHandler.getMatrixPath(filepath)))
+		{
+			file = new System.IO.StreamReader(filepath);
+			if (simulated) spawnAll();
+			else drawn = false;
+			Debug.Log(drawn);
+		}
+		else drawn = true;
+        clears++;
     }
 
     int round(float f) { return (int)(f * 1000F); }
 
-    static void ReadString()
-    {
-        string path = "Assets/Resources/test.txt";
+    public void addGuess(float[] addVals) {
+        maxGuess = 0;
+        for (int i = 0; i < addVals.Length; i++)
+        {
+            float add = Mathf.Clamp(addVals[i], -1, 1);
+            guess[i] += add;
+            if (guess[i] > guess[maxGuess]) maxGuess = i;
+        }
+        if(runDebugText)debugText();
+    }
 
-        //Read the text from directly from the test.txt file
-        StreamReader reader = new StreamReader(path);
-        Debug.Log(reader.ReadToEnd());
-        reader.Close();
+    public void debugText() {
+        if (textObject == null) return;
+        textMesh.text = maxGuess + " / " + attempt;
+        if (clears % 1000 == 0) {
+            for (int i = 0; i < thousandWins.Length;i++) {
+                thousandWinsOld[i] = thousandWins[i];
+                thousandLossesOld[i] = thousandLosses[i];
+                thousandWins[i] = 0;
+                thousandLosses[i] = 0;
+            }
+        }
+        if (maxGuess == attempt)
+        {
+            wins[attempt]++;
+            thousandWins[attempt]++;
+            textMesh.color = Color.green;
+        }
+        else
+        {
+            losses[attempt]++;
+            thousandLosses[attempt]++;
+            textMesh.color = Color.red;
+        }
+        if (clears % 10 == 0)
+        {
+            Debug.Log("--- Results "+clears+" ---");
+            int totalWins = 0;
+            int totalLosses = 0;
+            int totalThousandWins = 0;
+            int totalThousandLosses = 0;
+            for (int i = 0; i < wins.Length; i++) {
+				String type = SymbolHandler.symbolFromId(i);
+				totalLosses += losses[i];
+                totalWins += wins[i];
+                totalThousandLosses += thousandLossesOld[i];
+                totalThousandWins += thousandWinsOld[i];
+                DebugLine(type, wins[i], losses[i]);
+                DebugLine("Thousand " + type, thousandWinsOld[i], thousandLossesOld[i]);
+            }
+            DebugLine("Total", totalWins, totalLosses);
+            DebugLine("Thousand Total", totalThousandWins, totalThousandLosses);
+            Debug.Log("---------------");
+        }
+    }
+
+	public float[][] getMatrix() { return SymbolHandler.getMatrix(locs, filepath);  }
+
+    void DebugLine(String str, int wins, int losses) {
+        Debug.Log(str + ": " + (((float)wins) / (float)(losses+wins))+" - "+ (wins+losses));
     }
 }

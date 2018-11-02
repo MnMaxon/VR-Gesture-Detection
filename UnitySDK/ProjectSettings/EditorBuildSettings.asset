@@ -5,7 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/ML-Agents/Examples/Tennis/Scenes/TennisIL.unity
     guid: fcb7318b9c85c40a3b186ed8a3857f0a
+  - enabled: 1
+    path: Assets/New Scene.unity
+    guid: 555ee0d02f7f73540be50ae449db01c0
   m_configObjects: {}

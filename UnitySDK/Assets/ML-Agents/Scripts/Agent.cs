@@ -896,10 +896,13 @@ namespace MLAgents
         {
             // If an agent is done, then it will also 
             // request for a decision and an action
+     //       Debug.Log("SETP 1!");
             if (IsDone())
             {
+    //            Debug.Log("SETP 2!");
                 if (agentParameters.resetOnDone)
                 {
+      //              Debug.Log("SETP 3a!?: "+requestDecision);
                     if (agentParameters.onDemandDecision)
                     {
                         if (!hasAlreadyReset)
@@ -919,6 +922,7 @@ namespace MLAgents
                 }
                 else
                 {
+        //            Debug.Log("SETP 3b!");
                     terminate = true;
                     RequestDecision();
                 }

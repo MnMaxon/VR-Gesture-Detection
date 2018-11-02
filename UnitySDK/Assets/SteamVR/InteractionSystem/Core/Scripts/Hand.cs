@@ -37,7 +37,7 @@ namespace Valve.VR.InteractionSystem
         public const AttachmentFlags defaultAttachmentFlags = AttachmentFlags.ParentToHand |
                                                               AttachmentFlags.DetachOthers |
                                                               AttachmentFlags.DetachFromOtherHand |
-                                                              AttachmentFlags.TurnOnKinematic |
+                                                                AttachmentFlags.TurnOnKinematic |
                                                               AttachmentFlags.SnapOnAttach;
 
         public Hand otherHand;
@@ -56,9 +56,6 @@ namespace Valve.VR.InteractionSystem
 
         [SteamVR_DefaultAction("InteractUI")]
         public SteamVR_Action_Boolean uiInteractAction;
-
-        [SteamVR_DefaultAction("StartButton")]
-        public SteamVR_Action_Boolean startAction;
 
         public bool useHoverSphere = true;
         public Transform hoverSphereTransform;
@@ -793,8 +790,8 @@ namespace Valve.VR.InteractionSystem
 
             int numColliding = Physics.OverlapSphereNonAlloc(hoverPosition, hoverRadius, overlappingColliders, hoverLayerMask.value);
 
-            if (numColliding == ColliderArraySize)
-                Debug.LogWarning("This hand is overlapping the max number of colliders: " + ColliderArraySize + ". Some collisions may be missed. Increase ColliderArraySize on Hand.cs");
+			if (numColliding == ColliderArraySize) ;
+               // Debug.LogWarning("This hand is overlapping the max number of colliders: " + ColliderArraySize + ". Some collisions may be missed. Increase ColliderArraySize on Hand.cs");
 
             // DebugVar
             int iActualColliderCount = 0;

@@ -22,7 +22,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d8afa1c75d2fc5040b1b593931d834c5, type: 2}
   - {fileID: 11400000, guid: 41506c59ec7b59f469d35bfe202782ba, type: 2}
   - {fileID: 11400000, guid: b6c6e9a61dc4f794ab40574f2d56c776, type: 2}
-  - {fileID: 11400000, guid: efcc2ba78c37a034ab3419eef2c20daa, type: 2}
+  - {fileID: 11400000, guid: f793da4d2b821ae41aa8ce462ac6aa35, type: 2}
   InteractUI: {fileID: 11400000, guid: 1be5b327e96ab4145820fb14a47030ea, type: 2}
   Teleport: {fileID: 11400000, guid: e0a85eab378bc65478f2b88eac6b2e54, type: 2}
   GrabPinch: {fileID: 11400000, guid: b6ffe94fd00209548962e3a660c0dad5, type: 2}
@@ -31,4 +31,4 @@ MonoBehaviour:
   SkeletonLeftHand: {fileID: 11400000, guid: d8afa1c75d2fc5040b1b593931d834c5, type: 2}
   SkeletonRightHand: {fileID: 11400000, guid: 41506c59ec7b59f469d35bfe202782ba, type: 2}
   Squeeze: {fileID: 11400000, guid: b6c6e9a61dc4f794ab40574f2d56c776, type: 2}
-  StartPress: {fileID: 11400000, guid: efcc2ba78c37a034ab3419eef2c20daa, type: 2}
+  Start_Button: {fileID: 11400000, guid: f793da4d2b821ae41aa8ce462ac6aa35, type: 2}

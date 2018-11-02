@@ -5,12 +5,15 @@ using MLAgents;
 
 public class MyBallAgent : Agent
 {
-    public Drawer drawer;
+    Drawer drawer;
+    public GameObject drawObject = null;
+    public MyDrawAcademy ac;
 
 
     // Use this for initialization
     void Start()
     {
+        if (drawObject == null) drawObject = gameObject;
         drawer = drawObject.GetComponent(typeof(Drawer)) as Drawer;
 
     }
@@ -20,26 +23,49 @@ public class MyBallAgent : Agent
     {
 
     }
+    float currentCheck = 0f;
+	public override void CollectObservations()
+	{
+		drawer.ClearSpheres();
 
-    public override List<float> CollectState()
-    {
-        return drawer.locs;
-    }
+		float[][] matrix = drawer.getMatrix();
+		AddVectorObs((float)currentCheck);
+		for (int i = 0; i < matrix.Length; i++) {
+			for (int j = 0; j < matrix.Length; j++)
+			{
+				AddVectorObs(matrix[i][j]);
+			}
+		}
+	}
 
     public override void AgentReset()
     {
-        drawObject.ClearSpheres();
+
     }
 
-    public override void AgentStep(float[] act)
+    int yes = 0;
+    int no = 0;
+    public override void AgentAction(float[] act, string textAction)
     {
-        int max = 0;
-        drawObject.ClearSpheres();
-        for (int i = 0; i < act.Length; i++)
-        {
-            drawer.guess[i] += act[i];
-            if (drawer.guess[i] > drawer.guess[max]) max = i;
+		currentCheck = (int)Mathf.Clamp(4F*act[0], 0, 2);
+         
+        if (!drawer.drawn) return;
+		if (currentCheck == drawer.attempt) {
+            SetReward(1f);
+            yes++;
         }
-        if (max == drawer.attempt) reward = .1f;
+        else
+        {
+            no++;
+            SetReward(-1f);
+        }
+		if (UnityEngine.Random.Range(0, 10000) == 1)
+        Debug.Log(((int)currentCheck == drawer.attempt) + ": " + (((float)yes) / (float)(no + yes)));
+		if (drawer.textMesh == null) return;
+        drawer.textMesh.text = ""+(int)currentCheck;
+        if (currentCheck != drawer.attempt) drawer.textMesh.color = Color.red;
+        else drawer.textMesh.color = Color.green;
+        //Done();
+        // ac.Done();
     }
 }
