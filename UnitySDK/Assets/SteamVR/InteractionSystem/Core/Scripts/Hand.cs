@@ -14,104 +14,118 @@ using System.Threading;
 
 namespace Valve.VR.InteractionSystem
 {
-    //-------------------------------------------------------------------------
-    // Links with an appropriate SteamVR controller and facilitates
-    // interactions with objects in the virtual world.
-    //-------------------------------------------------------------------------
-    public class Hand : MonoBehaviour
-    {
-        // The flags used to determine how an object is attached to the hand.
-        [Flags]
-        public enum AttachmentFlags
-        {
-            SnapOnAttach = 1 << 0, // The object should snap to the position of the specified attachment point on the hand.
-            DetachOthers = 1 << 1, // Other objects attached to this hand will be detached.
-            DetachFromOtherHand = 1 << 2, // This object will be detached from the other hand.
-            ParentToHand = 1 << 3, // The object will be parented to the hand.
-            VelocityMovement = 1 << 4, // The object will attempt to move to match the position and rotation of the hand.
-            TurnOnKinematic = 1 << 5, // The object will not respond to external physics.
-            TurnOffGravity = 1 << 6, // The object will not respond to external physics.
-            AllowSidegrade = 1 << 7, // The object is able to switch from a pinch grab to a grip grab. Decreases likelyhood of a good throw but also decreases likelyhood of accidental drop
-        };
+	//-------------------------------------------------------------------------
+	// Links with an appropriate SteamVR controller and facilitates
+	// interactions with objects in the virtual world.
+	//-------------------------------------------------------------------------
+	public class Hand : MonoBehaviour
+	{
+		// The flags used to determine how an object is attached to the hand.
+		[Flags]
+		public enum AttachmentFlags
+		{
+			SnapOnAttach = 1 << 0, // The object should snap to the position of the specified attachment point on the hand.
+			DetachOthers = 1 << 1, // Other objects attached to this hand will be detached.
+			DetachFromOtherHand = 1 << 2, // This object will be detached from the other hand.
+			ParentToHand = 1 << 3, // The object will be parented to the hand.
+			VelocityMovement = 1 << 4, // The object will attempt to move to match the position and rotation of the hand.
+			TurnOnKinematic = 1 << 5, // The object will not respond to external physics.
+			TurnOffGravity = 1 << 6, // The object will not respond to external physics.
+			AllowSidegrade = 1 << 7, // The object is able to switch from a pinch grab to a grip grab. Decreases likelyhood of a good throw but also decreases likelyhood of accidental drop
+		};
 
-        public const AttachmentFlags defaultAttachmentFlags = AttachmentFlags.ParentToHand |
-                                                              AttachmentFlags.DetachOthers |
-                                                              AttachmentFlags.DetachFromOtherHand |
-                                                                AttachmentFlags.TurnOnKinematic |
-                                                              AttachmentFlags.SnapOnAttach;
+		public const AttachmentFlags defaultAttachmentFlags = AttachmentFlags.ParentToHand |
+															  AttachmentFlags.DetachOthers |
+															  AttachmentFlags.DetachFromOtherHand |
+																AttachmentFlags.TurnOnKinematic |
+															  AttachmentFlags.SnapOnAttach;
 
-        public Hand otherHand;
-        public SteamVR_Input_Sources handType;
+		public Hand otherHand;
+		public SteamVR_Input_Sources handType;
 
-        public SteamVR_Behaviour_Pose trackedObject;
+		public SteamVR_Behaviour_Pose trackedObject;
 
-        [SteamVR_DefaultAction("GrabPinch")]
-        public SteamVR_Action_Boolean grabPinchAction;
+		[SteamVR_DefaultAction("GrabPinch")]
+		public SteamVR_Action_Boolean grabPinchAction;
 
-        [SteamVR_DefaultAction("GrabGrip")]
-        public SteamVR_Action_Boolean grabGripAction;
+		[SteamVR_DefaultAction("GrabGrip")]
+		public SteamVR_Action_Boolean grabGripAction;
 
-        [SteamVR_DefaultAction("Haptic")]
-        public SteamVR_Action_Vibration hapticAction;
+		[SteamVR_DefaultAction("Haptic")]
+		public SteamVR_Action_Vibration hapticAction;
 
-        [SteamVR_DefaultAction("InteractUI")]
-        public SteamVR_Action_Boolean uiInteractAction;
+		[SteamVR_DefaultAction("InteractUI")]
+		public SteamVR_Action_Boolean uiInteractAction;
 
-        public bool useHoverSphere = true;
-        public Transform hoverSphereTransform;
-        public float hoverSphereRadius = 0.05f;
-        public LayerMask hoverLayerMask = -1;
-        public float hoverUpdateInterval = 0.1f;
+		[SteamVR_DefaultAction("StartButton")]
+		public SteamVR_Action_Boolean startAction;
 
-        public bool useControllerHoverComponent = true;
-        public string controllerHoverComponent = "tip";
-        public float controllerHoverRadius = 0.075f;
+		[SteamVR_DefaultAction("PadTouch")]
+		public SteamVR_Action_Vector2 padTouch;
 
-        public bool useFingerJointHover = true;
-        public SteamVR_Skeleton_JointIndexEnum fingerJointHover = SteamVR_Skeleton_JointIndexEnum.indexTip;
-        public float fingerJointHoverRadius = 0.025f;
+		[SteamVR_DefaultAction("Teleport")]
+		public SteamVR_Action_Boolean teleportAction;
 
-        [Tooltip("A transform on the hand to center attached objects on")]
-        public Transform objectAttachmentPoint;
+		public bool useHoverSphere = true;
+		public Transform hoverSphereTransform;
+		public float hoverSphereRadius = 0.05f;
+		public LayerMask hoverLayerMask = -1;
+		public float hoverUpdateInterval = 0.1f;
 
-        public Camera noSteamVRFallbackCamera;
-        public float noSteamVRFallbackMaxDistanceNoItem = 10.0f;
-        public float noSteamVRFallbackMaxDistanceWithItem = 0.5f;
-        private float noSteamVRFallbackInteractorDistance = -1.0f;
+		public bool flying = false;
 
-        public GameObject renderModelPrefab;
-        protected List<RenderModel> renderModels = new List<RenderModel>();
-        protected RenderModel mainRenderModel;
-        protected RenderModel hoverhighlightRenderModel;
+		public bool useControllerHoverComponent = true;
+		public string controllerHoverComponent = "tip";
+		public float controllerHoverRadius = 0.075f;
 
-        public bool showDebugText = false;
-        public bool spewDebugText = false;
-        public bool showDebugInteractables = false;
+		public bool useFingerJointHover = true;
+		public SteamVR_Skeleton_JointIndexEnum fingerJointHover = SteamVR_Skeleton_JointIndexEnum.indexTip;
+		public float fingerJointHoverRadius = 0.025f;
 
-        public struct AttachedObject
-        {
-            public GameObject attachedObject;
-            public Interactable interactable;
-            public Rigidbody attachedRigidbody;
-            public CollisionDetectionMode collisionDetectionMode;
-            public bool attachedRigidbodyWasKinematic;
-            public bool attachedRigidbodyUsedGravity;
-            public GameObject originalParent;
-            public bool isParentedToHand;
-            public GrabTypes grabbedWithType;
-            public AttachmentFlags attachmentFlags;
-            public Vector3 initialPositionalOffset;
-            public Quaternion initialRotationalOffset;
-            public Transform attachedOffsetTransform;
-            public Transform handAttachmentPointTransform;
+		[Tooltip("A transform on the hand to center attached objects on")]
+		public Transform objectAttachmentPoint;
 
-            public bool HasAttachFlag(AttachmentFlags flag)
-            {
-                return (attachmentFlags & flag) == flag;
-            }
-        }
+		public Camera noSteamVRFallbackCamera;
+		public float noSteamVRFallbackMaxDistanceNoItem = 10.0f;
+		public float noSteamVRFallbackMaxDistanceWithItem = 0.5f;
+		private float noSteamVRFallbackInteractorDistance = -1.0f;
 
-        private List<AttachedObject> attachedObjects = new List<AttachedObject>();
+		public GameObject renderModelPrefab;
+		protected List<RenderModel> renderModels = new List<RenderModel>();
+		protected RenderModel mainRenderModel;
+		protected RenderModel hoverhighlightRenderModel;
+
+		public bool showDebugText = false;
+		public bool spewDebugText = false;
+		public bool showDebugInteractables = false;
+
+		public struct AttachedObject
+		{
+			public GameObject attachedObject;
+			public Interactable interactable;
+			public Rigidbody attachedRigidbody;
+			public CollisionDetectionMode collisionDetectionMode;
+			public bool attachedRigidbodyWasKinematic;
+			public bool attachedRigidbodyUsedGravity;
+			public GameObject originalParent;
+			public bool isParentedToHand;
+			public GrabTypes grabbedWithType;
+			public AttachmentFlags attachmentFlags;
+			public Vector3 initialPositionalOffset;
+			public Quaternion initialRotationalOffset;
+			public Transform attachedOffsetTransform;
+			public Transform handAttachmentPointTransform;
+
+			public bool HasAttachFlag(AttachmentFlags flag)
+			{
+				return (attachmentFlags & flag) == flag;
+			}
+		}
+
+		public bool CanTeleport() { return !flying; }
+
+
+		private List<AttachedObject> attachedObjects = new List<AttachedObject>();
 
         public ReadOnlyCollection<AttachedObject> AttachedObjects
         {
@@ -317,6 +331,11 @@ namespace Valve.VR.InteractionSystem
                 renderModels[renderModelIndex].StopAnimation();
             }
         }
+
+		public void AttachScripted(GameObject objectToAttach, GrabTypes grabbedWithType = GrabTypes.Scripted, AttachmentFlags flags = defaultAttachmentFlags, Transform attachmentOffset = null)
+		{
+			AttachObject(objectToAttach, grabbedWithType, flags, attachmentOffset);
+		}
 
 
         //-------------------------------------------------

@@ -28,7 +28,9 @@ MonoBehaviour:
   - __actions_default_in_SkeletonLeftHand
   - __actions_default_in_SkeletonRightHand
   - __actions_default_in_Squeeze
-  - __actions_default_in_Start_Button
+  - __actions_default_in_StartButton
+  - __actions_default_in_PadTouch
+  - __actions_default_in_PadPress
   - __actions_default_out_Haptic
   - __actions_platformer_in_Move
   - __actions_platformer_in_Jump
@@ -45,7 +47,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d8afa1c75d2fc5040b1b593931d834c5, type: 2}
   - {fileID: 11400000, guid: 41506c59ec7b59f469d35bfe202782ba, type: 2}
   - {fileID: 11400000, guid: b6c6e9a61dc4f794ab40574f2d56c776, type: 2}
-  - {fileID: 11400000, guid: f793da4d2b821ae41aa8ce462ac6aa35, type: 2}
+  - {fileID: 11400000, guid: ae50131f561d80746b2d10e0896fcfc4, type: 2}
+  - {fileID: 11400000, guid: 8fe66f65937ac8d419fc52d99f96712b, type: 2}
+  - {fileID: 11400000, guid: 1b83bf60d214f264d988e0ede529a3d3, type: 2}
   - {fileID: 11400000, guid: 09d071f355c58a6418f73c610a275bde, type: 2}
   - {fileID: 11400000, guid: 3ffa332d905678b40be9197a70cfd94c, type: 2}
   - {fileID: 11400000, guid: 4a7f20ff351910d45a2a8a12fc1de0f6, type: 2}

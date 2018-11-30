@@ -36,7 +36,15 @@
       "requirement": "optional"
     },
     {
-      "name": "/actions/default/in/Start Button",
+      "name": "/actions/default/in/StartButton",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/default/in/PadTouch",
+      "type": "vector2"
+    },
+    {
+      "name": "/actions/default/in/PadPress",
       "type": "boolean"
     },
     {
@@ -116,7 +124,10 @@
       "/actions/buggybuddy/in/Brake": "Brake",
       "/actions/buggybuddy/in/Reset": "Reset",
       "/actions/platformer/in/Move": "Move",
-      "/actions/platformer/in/Jump": "Jump"
+      "/actions/platformer/in/Jump": "Jump",
+      "/actions/default/in/StartButton": "Start Button",
+      "/actions/default/in/PadTouch": "Pad Touch",
+      "/actions/default/in/PadPress": "Pad Press"
     }
   ]
 }

@@ -250,7 +250,7 @@ namespace Valve.VR.InteractionSystem
 					}
 				}
 
-				if ( WasTeleportButtonPressed( hand ) )
+				if ( hand.CanTeleport() && WasTeleportButtonPressed( hand ) )
 				{
 					newPointerHand = hand;
 				}

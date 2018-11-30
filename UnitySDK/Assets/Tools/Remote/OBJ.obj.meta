@@ -1,0 +1,186 @@
+fileFormatVersion: 2
+guid: 7eb2ed17e949bdf479bbcfd7c48527a5
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Indicators_PKEmeter
+    100002: //RootNode
+    100004: PKEmeter_BackPanel
+    100006: PKEmeter_BottomPanel
+    100008: PKEmeter_BottomPart
+    100010: PKEmeter_Buttons
+    100012: PKEmeter_Diodes
+    100014: PKEmeter_Display
+    100016: PKEmeter_DisplayEmit
+    100018: PKEmeter_DisplaySwitch
+    100020: PKEmeter_FrontPanel
+    100022: PKEmeter_RechargeSocket
+    100024: PKEmeter_Roller
+    100026: PKEmeter_Screw_1
+    100028: PKEmeter_Screw_2
+    100030: PKEmeter_Switch
+    100032: PKEmeter_Wings
+    400000: Indicators_PKEmeter
+    400002: //RootNode
+    400004: PKEmeter_BackPanel
+    400006: PKEmeter_BottomPanel
+    400008: PKEmeter_BottomPart
+    400010: PKEmeter_Buttons
+    400012: PKEmeter_Diodes
+    400014: PKEmeter_Display
+    400016: PKEmeter_DisplayEmit
+    400018: PKEmeter_DisplaySwitch
+    400020: PKEmeter_FrontPanel
+    400022: PKEmeter_RechargeSocket
+    400024: PKEmeter_Roller
+    400026: PKEmeter_Screw_1
+    400028: PKEmeter_Screw_2
+    400030: PKEmeter_Switch
+    400032: PKEmeter_Wings
+    2100000: Indicators_PKEmeterMat
+    2100002: PKEmeter_BackPanelMat
+    2100004: PKEmeter_BottomPanelMat
+    2100006: PKEmeter_BottomPartMat
+    2100008: PKEmeter_ButtonsMat
+    2100010: PKEmeter_DiodesMat
+    2100012: PKEmeter_DisplayMat
+    2100014: PKEmeter_DisplayEmitMat
+    2100016: PKEmeter_DisplaySwitchMat
+    2100018: PKEmeter_FrontPanelMat
+    2100020: PKEmeter_RechargeSocketMat
+    2100022: PKEmeter_RollerMat
+    2100024: PKEmeter_Screw_1Mat
+    2100026: PKEmeter_Screw_2Mat
+    2100028: PKEmeter_SwitchMat
+    2100030: PKEmeter_WingsMat
+    2300000: Indicators_PKEmeter
+    2300002: PKEmeter_BackPanel
+    2300004: PKEmeter_BottomPanel
+    2300006: PKEmeter_BottomPart
+    2300008: PKEmeter_Buttons
+    2300010: PKEmeter_Diodes
+    2300012: PKEmeter_Display
+    2300014: PKEmeter_DisplayEmit
+    2300016: PKEmeter_DisplaySwitch
+    2300018: PKEmeter_FrontPanel
+    2300020: PKEmeter_RechargeSocket
+    2300022: PKEmeter_Roller
+    2300024: PKEmeter_Screw_1
+    2300026: PKEmeter_Screw_2
+    2300028: PKEmeter_Switch
+    2300030: PKEmeter_Wings
+    3300000: Indicators_PKEmeter
+    3300002: PKEmeter_BackPanel
+    3300004: PKEmeter_BottomPanel
+    3300006: PKEmeter_BottomPart
+    3300008: PKEmeter_Buttons
+    3300010: PKEmeter_Diodes
+    3300012: PKEmeter_Display
+    3300014: PKEmeter_DisplayEmit
+    3300016: PKEmeter_DisplaySwitch
+    3300018: PKEmeter_FrontPanel
+    3300020: PKEmeter_RechargeSocket
+    3300022: PKEmeter_Roller
+    3300024: PKEmeter_Screw_1
+    3300026: PKEmeter_Screw_2
+    3300028: PKEmeter_Switch
+    3300030: PKEmeter_Wings
+    4300000: Indicators_PKEmeter
+    4300002: PKEmeter_BackPanel
+    4300004: PKEmeter_BottomPanel
+    4300006: PKEmeter_BottomPart
+    4300008: PKEmeter_Buttons
+    4300010: PKEmeter_Diodes
+    4300012: PKEmeter_Display
+    4300014: PKEmeter_DisplayEmit
+    4300016: PKEmeter_DisplaySwitch
+    4300018: PKEmeter_FrontPanel
+    4300020: PKEmeter_RechargeSocket
+    4300022: PKEmeter_Roller
+    4300024: PKEmeter_Screw_1
+    4300026: PKEmeter_Screw_2
+    4300028: PKEmeter_Switch
+    4300030: PKEmeter_Wings
+  externalObjects: {}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 0.02
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 1
+    hasPreviousCalculatedGlobalScale: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -9,143 +9,143 @@ using System.IO;
 
 public class Marker : MonoBehaviour {
 
-    int frames = 0;
-    Hand hand;
+	public static int inputSizeRoot = 28;
+	public GameObject wandPrefab;
+	Hand hand;
     List<GameObject> spheres = new List<GameObject>();
-    List<Vector3> locs = new List<Vector3>();
+    List<Vector3> locs = new List<Vector3>(), oldLocs = new List<Vector3>();
+    List<int> seperators = new List<int>();
     bool triggerPressed = false;
-    string curtype = "Cone";
+    string curtype = "Triangle";
     const int places = 1000;
     SymbolTensorChecker symbolTensorChecker = null;
-	bool spawnObs = true;
-	public static int inputSizeRoot = 28;
-	bool draw = true;
-	public GameObject cubePrefab;
-	public GameObject bulletPrefab;
-
-
+	bool spawnObs = true; // True to have it actually do something, false to have it draw new things
+	GameObject wand = null;
+	List<GameObject> topObs = new List<GameObject>();
+	bool passiveLearn = true;
+	bool lastZero = true;
+	bool currentlyFlying = false;
+	int rand;
+	Vector3 lastFly;
+	public TextMesh pythonText = null;
 
 	// Use this for initialization
 	void Start () {
         //Controller = gameObject.GetComponent("SteamVR_TrackedObject") as SteamVR_TrackedObject;
         hand = gameObject.GetComponent("Hand") as Hand;
 		symbolTensorChecker = gameObject.GetComponent("SymbolTensorChecker") as SymbolTensorChecker;
-    }
-	
+	}
+
 	// Update is called once per frame
-	void Update ()
-    {
+	void Update()
+	{
+		GameObject handAttached = null;
+		Tool tool = null;
+		
+		if (hand.AttachedObjects.Count != 0) {
+			handAttached = hand.AttachedObjects[0].attachedObject;
+			tool = handAttached.GetComponent<Tool>();
+			foreach (GameObject obj in topObs) if(obj!=handAttached) Destroy(obj);
+		}
+
 		foreach (GameObject sphere in spheres) sphere.GetComponent<MeshRenderer>().material.color = symbolTensorChecker.getColor();
+
+		if (hand.startAction.GetStateDown(hand.handType) && tool == null)
+			if (wand == null) PropHandler.save();
+			else PropHandler.load();
 
 		//if (hand.grabGripAction.GetStateDown(hand.handType)) curColor = (curColor + 1) % colors.Length;
 		if (hand.grabGripAction.GetStateDown(hand.handType))
 		{
-			if (spawnObs)
-			{
-				symbolTensorChecker.debug();
-				if (spheres.Count > 0)// && symbolTensorChecker.getProb() > .3)
-				{
-					Vector3 min = spheres[0].transform.position;
-					Vector3 max = spheres[0].transform.position;
-					foreach (GameObject sphere in spheres)
-					{
-						Vector3 loc = sphere.transform.position;
-						min = Vector3.Min(min, loc);
-						max = Vector3.Max(max, loc);
-					}
-					float dist = Vector3.Distance(min, max);
-					int guess = symbolTensorChecker.getGuess();
-
-					if (guess == 1 || guess == 0)
-					{
-						Vector3 scale = new Vector3(dist, dist, dist);
-
-
-						scale = scale;
-
-
-						PrimitiveType pt;
-						if (guess == 0) pt = PrimitiveType.Cube;
-						else pt = PrimitiveType.Sphere;
-
-						GameObject go = GameObject.CreatePrimitive(pt);
-						go.transform.position = min;
-						go.transform.localScale = scale;
-						MeshRenderer meshRenderer = go.GetComponent<MeshRenderer>();
-						Rigidbody gameObjectsRigidBody = go.AddComponent<Rigidbody>();
-						if (guess == 1)
-						{
-							gameObjectsRigidBody.velocity = hand.GetTrackedObjectVelocity() * 5;
-							go.transform.position = gameObject.transform.position;
-						}
-						else
-						{
-							go.transform.position = min;
-						}
-					}
-					else if (guess == 2)
-					{
-						List<Vector3> vecMod = new List<Vector3> {
-							new Vector3(-1, -1, -1), new Vector3(-1, -1, 0) , new Vector3(-1, -1, 1),
-							new Vector3(-1, 0, -1), new Vector3(-1, 0, 0) , new Vector3(-1, 0, 1),
-							new Vector3(-1, 1, -1), new Vector3(-1, 1, 0) , new Vector3(-1, 1, 1),
-							new Vector3(0, -1, -1), new Vector3(0, -1, 0) , new Vector3(-1, -1, 1),
-							new Vector3(0, 0, -1), new Vector3(0, 0, 0) , new Vector3(0, 0, 1),
-							new Vector3(0, 1, -1), new Vector3(0, 1, 0) , new Vector3(0, 1, 1),
-							new Vector3(1, -1, -1), new Vector3(1, -1, 0) , new Vector3(1, -1, 1),
-							new Vector3(1, 0, -1), new Vector3(1, 0, 0) , new Vector3(1, 0, 1),
-							new Vector3(1, 1, -1), new Vector3(1, 1, 0) , new Vector3(1, 1, 1)
-						};
-						foreach (Vector3 mod in vecMod)
-						{
-							Vector3 spawnVec = (min + max) / 2;
-							for (int i = 0; i < 3; i++) spawnVec[i] += mod[i] * .7f;
-							Instantiate(cubePrefab, spawnVec, Quaternion.identity);
-						}
-					}
-					else if (guess == 3)
-					{
-						GameObject bullet = Instantiate(bulletPrefab, gameObject.transform.position, gameObject.transform.rotation);
-						bullet.GetComponent<Rigidbody>().velocity = gameObject.transform.forward*10f;
-					}
+			if (wand == null) {
+				wand = Instantiate(wandPrefab, new Vector3(0, 0, 0), Quaternion.identity);
+				hand.AttachScripted(wand);
+				while (topObs.Count > 0) {
+					Destroy(topObs[0]);
+					topObs.RemoveAt(0);
 				}
-			} else WriteSpheres(curtype);
+			} else {
+				GameObject.Destroy(wand);
+				wand = null;
+				float[,] eval = symbolTensorChecker.debug();
+
+				string pythonGuess = SymbolHandler.python_guess(locs, seperators);
+				Debug.Log(pythonGuess);
+				if (pythonText != null)
+				{
+					pythonText.text = pythonGuess;
+				}
+
+				if (spawnObs)
+				{
+					List<KeyValuePair<int, float>> top = SymbolTensorChecker.topThree(eval);
+					Symbol[] topSymbols = new Symbol[3];
+					for(int i = 0; i < topSymbols.Length; i++) topSymbols[i] = SymbolHandler.fromId(top[i].Key);
+					float dis = .1F, hor = .3F;
+					topObs.Add(Instantiate(topSymbols[0].getHoverPrefab(), transform.position + transform.up * dis, Quaternion.identity));
+					topObs.Add(Instantiate(topSymbols[1].getHoverPrefab(), transform.position + transform.up * dis - transform.right * hor, Quaternion.identity));
+					topObs.Add(Instantiate(topSymbols[2].getHoverPrefab(), transform.position + transform.up * dis + transform.right * hor, Quaternion.identity));
+					foreach (GameObject go in topObs) {
+						Rigidbody rb = go.GetComponent<Rigidbody>();
+						if (rb != null) rb.useGravity = false;
+					}
+				} else WriteSpheres(curtype);
+			}
+			ClearSpheres();
 		}
-        if (hand.grabGripAction.GetStateDown(hand.handType)) ClearSpheres();
         if (hand.grabPinchAction.GetStateDown(hand.handType)) triggerPressed = true;
         if (hand.grabPinchAction.GetStateUp(hand.handType)) triggerPressed = false;
-        if (triggerPressed && draw && hand.AttachedObjects.Count == 0)
+        if (triggerPressed)
         {
-            Spawn();
+			if (wand != null) {
+				if (hand.grabPinchAction.GetStateDown(hand.handType)) seperators.Add(locs.Count);
+				Spawn();
+			}
         }
+
+		bool padActive = (hand.padTouch.GetAxis(hand.handType) * 50F).magnitude > 1;
+		if (!padActive) lastZero = true;
+		else if (lastZero) {
+			padActive = false;
+			lastZero = false;
+		}
+
+		if (tool != null) tool.handUpdate(gameObject, hand.grabPinchAction.GetStateDown(hand.handType), hand.startAction.GetStateDown(hand.handType),
+			hand.padTouch.GetLastAxisDelta(hand.handType), padActive);
+
+		if (hand.flying && hand.teleportAction.GetLastState(hand.handType))
+		{
+			Player p = getPlayerParent(gameObject);
+			Vector3 curFly = p.transform.position - gameObject.transform.position;
+			if (currentlyFlying)
+			{
+				p.gameObject.transform.position += curFly- lastFly;
+			}
+			else currentlyFlying = true;
+			lastFly = curFly;
+		}
+		else currentlyFlying = false;
+
     }
+
+	public Player getPlayerParent(GameObject go) {
+		Player p = go.GetComponent<Player>();
+		if (p != null) return p;
+		Transform t = go.transform.parent;
+		if (t == null) return null;
+		return getPlayerParent(t.gameObject);
+	}
 
     void Spawn() {
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         spheres.Add(sphere);
-        sphere.transform.position = transform.position;
+        sphere.transform.position = transform.position + transform.forward *.3F;
         float size = .02F;
         sphere.transform.localScale = new Vector3(size,size,size);
         MeshRenderer meshRenderer = sphere.GetComponent<MeshRenderer>();
         meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
         meshRenderer.material.color = symbolTensorChecker.getColor();
-        locs.Add(transform.position - spheres[0].transform.position);
-        //StartCoroutine(Erase(sphere, 8));
-    }
-
-    IEnumerator Erase(GameObject go, int time)
-    {
-        yield return new WaitForSeconds(time);
-        DeleteSphere(go);
-    }
-
-    void DeleteSphere(GameObject go)
-    {
-        if (spheres.Contains(go))
-        {
-            Destroy(go);
-            spheres.Remove(go);
-        }
+        locs.Add(sphere.transform.position - spheres[0].transform.position);
     }
 
     void ClearSpheres()
@@ -153,7 +153,8 @@ public class Marker : MonoBehaviour {
         foreach (GameObject go in spheres) Destroy(go);
         spheres.Clear();
         locs.Clear();
-    }
+		seperators.Clear();
+	}
 
     int round(float f) { return (int)(f * 1000F); }
 
@@ -163,38 +164,18 @@ public class Marker : MonoBehaviour {
         string dir = "Assets/Resources/DrawingData/" + type + "/";
         string path = dir + type.ToLower() +DateTime.Now.ToString(" MM-dd-yyyy HH-mm-ss.fff") +".log";
         System.IO.Directory.CreateDirectory(dir);
-		//System.IO.File.Create(path);
-
-		if (spheres.Count != 0)
-		{
-			string str = "";
-			float[,,] arr = getMatrix();
-;
-
-			for (int i = 0; i < arr.GetLength(0); i++) for (int j = 0; j < arr.GetLength(1); j++)
-					for (int k = 0; k < arr.GetLength(2); k++)
-					{
-						if (j == 0 && k == 0 && i != 0) str += "\n";
-						str += (arr[i,j,k] == 0F) ? ' ' : '*';
-					}
-
-			using (StreamWriter writer = new StreamWriter(path))
-			{
-				writer.Write(str);
-				writer.Close();
-			}
-		}
-
-		/* OLD 2D Symbols
+		
         Vector3 origin;
         if (spheres.Count != 0)
         {
             string str = "";
             origin = spheres[0].transform.position;
+			List<Vector3> vecs = new List<Vector3>();
             foreach (GameObject sphere in spheres)
             {
                 Vector3 p = origin - sphere.transform.position;
                 str+=round(p.x) + "," + round(p.y) + "," + round(p.z)+"\n";
+				vecs.Add(p);
             }
 
 
@@ -203,13 +184,17 @@ public class Marker : MonoBehaviour {
                 writer.Write(str);
                 writer.Close();
             }
+
+			//Saves the Matrix
+			SymbolHandler.getMatrix(vecs, path);
         }
-		*/
 	}
 
-    public float[,,] getMatrix()
+	public float[,] getMatrix()
     {
-		return SymbolHandler.get3DMatrix(locs);
+		return SymbolHandler.getMatrix(locs);
     }
+
+	public List<Vector3> getLocList() { return locs; }
 
 }

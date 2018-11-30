@@ -26,6 +26,12 @@ TagManager:
   - pyramid
   - switchOn
   - stone
+  - projectile
+  - FxTemporaire
+  - HoverCircle
+  - HoverBrush
+  - HoverSquare
+  - HoverStar
   layers:
   - Default
   - TransparentFX

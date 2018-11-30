@@ -76,7 +76,7 @@ GameObject:
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
-  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -886,6 +886,9 @@ MonoBehaviour:
   grabGripAction: {fileID: 11400000, guid: 6d2ae688e6b1aa540a2fb174f78f7e33, type: 2}
   hapticAction: {fileID: 11400000, guid: 09d071f355c58a6418f73c610a275bde, type: 2}
   uiInteractAction: {fileID: 11400000, guid: 1be5b327e96ab4145820fb14a47030ea, type: 2}
+  startAction: {fileID: 11400000, guid: ae50131f561d80746b2d10e0896fcfc4, type: 2}
+  padTouch: {fileID: 11400000, guid: 8fe66f65937ac8d419fc52d99f96712b, type: 2}
+  teleportAction: {fileID: 11400000, guid: e0a85eab378bc65478f2b88eac6b2e54, type: 2}
   useHoverSphere: 1
   hoverSphereTransform: {fileID: 480432}
   hoverSphereRadius: 0.075
@@ -939,6 +942,9 @@ MonoBehaviour:
   grabGripAction: {fileID: 11400000, guid: 6d2ae688e6b1aa540a2fb174f78f7e33, type: 2}
   hapticAction: {fileID: 11400000, guid: 09d071f355c58a6418f73c610a275bde, type: 2}
   uiInteractAction: {fileID: 11400000, guid: 1be5b327e96ab4145820fb14a47030ea, type: 2}
+  startAction: {fileID: 11400000, guid: ae50131f561d80746b2d10e0896fcfc4, type: 2}
+  padTouch: {fileID: 11400000, guid: 8fe66f65937ac8d419fc52d99f96712b, type: 2}
+  teleportAction: {fileID: 11400000, guid: e0a85eab378bc65478f2b88eac6b2e54, type: 2}
   useHoverSphere: 1
   hoverSphereTransform: {fileID: 4000012325712216}
   hoverSphereRadius: 0.075
@@ -1149,6 +1155,9 @@ MonoBehaviour:
   grabGripAction: {fileID: 11400000, guid: 6d2ae688e6b1aa540a2fb174f78f7e33, type: 2}
   hapticAction: {fileID: 11400000, guid: 09d071f355c58a6418f73c610a275bde, type: 2}
   uiInteractAction: {fileID: 11400000, guid: 1be5b327e96ab4145820fb14a47030ea, type: 2}
+  startAction: {fileID: 11400000, guid: ae50131f561d80746b2d10e0896fcfc4, type: 2}
+  padTouch: {fileID: 11400000, guid: 8fe66f65937ac8d419fc52d99f96712b, type: 2}
+  teleportAction: {fileID: 11400000, guid: e0a85eab378bc65478f2b88eac6b2e54, type: 2}
   useHoverSphere: 1
   hoverSphereTransform: {fileID: 0}
   hoverSphereRadius: 0.05
