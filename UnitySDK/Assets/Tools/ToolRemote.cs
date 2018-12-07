@@ -8,9 +8,11 @@ public class ToolRemote : Tool {
 	Selector sel;
 	Quaternion presnapped;
 	bool usepresnapped = false;
+	int snapCool = 0;
 
 	// Use this for initialization
 	void Start () {
+		name = "Spawn Remote";
 		sel = new Selector(this);
 	}
 
@@ -49,8 +51,12 @@ public class ToolRemote : Tool {
 		if (sel.hitObject())
 		{
 			color = Color.green;
-			propObject.transform.position = sel.getEnd();
-			PropHandler.snap(propObject);
+			if (snapCool == 0)
+			{
+				propObject.transform.position = sel.getEnd();
+				if(PropHandler.snap(propObject)) snapCool = 4;
+			}
+			else snapCool--;
 			if (pinch) {
 				SetAllCollision(propObject, true);
 				PropHandler.track(propObject);

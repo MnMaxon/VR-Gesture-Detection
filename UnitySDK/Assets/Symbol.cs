@@ -12,7 +12,11 @@ public class Symbol {
 		this.id = id;
 	}
 
-	public void setHoverPrefab(GameObject hoverPrefab) { this.hoverPrefab = hoverPrefab; }
+	public void setHoverPrefab(GameObject hoverPrefab) {
+		this.hoverPrefab = hoverPrefab;
+		Tool tool = hoverPrefab.GetComponent<Tool>();
+		tool.symbol = this;
+	}
 
 	public GameObject getHoverPrefab() { return hoverPrefab; }
 

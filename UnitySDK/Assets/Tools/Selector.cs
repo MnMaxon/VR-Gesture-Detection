@@ -28,17 +28,33 @@ public class Selector {
 
 	public Vector3 getEnd() { return getRayStart() + dir * getDistance(); }
 
-	public void select(GameObject handOb, float maxDist = 100F)
+	public void select(GameObject handOb, float maxDist = 100F, GameObject ignored = null)
 	{
 		handObLoc = handOb.transform.position;
 		dir = handOb.transform.forward;
-		RaycastHit hit;
-		hitOb = Physics.Raycast(getRayStart(), dir, out hit, maxDist);
+		hitOb = false;
+		RaycastHit hit= new RaycastHit();
+		RaycastHit[] hits = Physics.RaycastAll(getRayStart(), dir, maxDist);
+		Debug.Log(hits.Length);
+		distance = maxDist;
+		for (int i = 0; i < hits.Length; i++)
+		{
+			Debug.Log(hits[i].collider.gameObject+": " + hits[i].distance);
+			if (hits[i].distance < distance
+				&&  (ignored == null || PropHandler.getOldestParent(hits[i].collider.gameObject) != ignored)
+				)
+			{
+				hitOb = true;
+				hit = hits[i];
+				distance = hit.distance;
+				//break;
+			}
+		}
 		if (hitOb)
 		{
-			distance = hit.distance;
 			selected = PropHandler.getOldestParent(hit.collider.gameObject).GetComponent<Prop>();
 			hitGameObject = hit.collider.gameObject;
+			Debug.Log("WINNER: " + hitGameObject);
 			//Debug.Log(PathString(hitGameObject));
 		}
 	}

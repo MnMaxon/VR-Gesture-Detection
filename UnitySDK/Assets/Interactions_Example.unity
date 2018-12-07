@@ -8178,15 +8178,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   graphModel: {fileID: 4900000, guid: 1b36868ead42f2c4a89d1456392099d3, type: 3}
+  FollowHead: {fileID: 1826624638}
   squareHoverPrefab: {fileID: 1517577481142434, guid: c3120a847178d624fb3a28915de23d9b,
     type: 2}
   circleHoverPrefab: {fileID: 1780796003461698, guid: 463860cafdfe368418dc79f3ead69852,
     type: 2}
   starHoverPrefab: {fileID: 1517577481142434, guid: 4faf4277656ce1b479ef5166bf399d03,
     type: 2}
-  brushHoverPrefab: {fileID: 1377365259758542, guid: 3c6d6d874d546494d8909ca54b39f8ea,
+  diamondHoverPrefab: {fileID: 1377365259758542, guid: 3c6d6d874d546494d8909ca54b39f8ea,
     type: 2}
-  plusHoverPrefab: {fileID: 1517577481142434, guid: d483b04b78bacde4b8f617dcaa0affbc,
+  squiggleHoverPrefab: {fileID: 1517577481142434, guid: d483b04b78bacde4b8f617dcaa0affbc,
     type: 2}
   triangleHoverPrefab: {fileID: 1517577481142434, guid: d0c8e66ca40c1d6429751098f1d90962,
     type: 2}
@@ -8197,6 +8198,7 @@ MonoBehaviour:
   - {fileID: 1459506974456422, guid: 179d7f984df2d8e4fb2a3adad779b359, type: 2}
   - {fileID: 1900988837398842, guid: d1f5ea59f3a3fbd45809ab0816e93ca3, type: 2}
   - {fileID: 1578233314806844, guid: 78d0443a3c14b6d4db9103d21b155498, type: 2}
+  recieved: 
 --- !u!4 &1248164107
 Transform:
   m_ObjectHideFlags: 0
@@ -9343,9 +9345,6 @@ GameObject:
   - component: {fileID: 1477037013}
   - component: {fileID: 1477037011}
   - component: {fileID: 1477037012}
-  - component: {fileID: 1477037015}
-  - component: {fileID: 1477037017}
-  - component: {fileID: 1477037016}
   m_Layer: 0
   m_Name: Floor
   m_TagString: Untagged
@@ -9420,39 +9419,6 @@ Transform:
   m_Father: {fileID: 1856428177}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1477037015
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1477037010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8e4d7eef8824d534091c23880dd59a30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1477037016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1477037010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9d481d9d43ea73408fca5b88f618345, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1477037017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1477037010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d9d481d9d43ea73408fca5b88f618345, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1480377450
 Prefab:
   m_ObjectHideFlags: 0
@@ -11103,7 +11069,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wandPrefab: {fileID: 100008, guid: 35db611f1966cf74fbc5add86652221d, type: 3}
-  pythonText: {fileID: 0}
+  pythonText: {fileID: 1266351127}
 --- !u!114 &1801642815
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11314,6 +11280,11 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!1 &1826624638 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 125964, guid: dc06161b6d97feb419f45f03b62e14b9,
+    type: 2}
+  m_PrefabInternal: {fileID: 1801642802}
 --- !u!1 &1838753430
 GameObject:
   m_ObjectHideFlags: 0

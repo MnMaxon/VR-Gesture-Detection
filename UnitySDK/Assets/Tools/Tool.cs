@@ -5,6 +5,9 @@ using Valve.VR.InteractionSystem;
 
 public class Tool : MonoBehaviour {
 
+	string name = "None";
+	public Symbol symbol = null;
+
 	// Use this for initialization
 	void Start () {
 		
@@ -19,6 +22,12 @@ public class Tool : MonoBehaviour {
 		Destroy(gameObject.GetComponent<Equippable>());
 		Destroy(gameObject.GetComponent<Throwable>());
 	}
+
+	public string getName() { return name; }
+
+	public virtual string getName(GameObject handOb) { return getName(); }
+
+	public Symbol getSymbol() { return symbol; }
 
 	public virtual void handUpdate() { }
 

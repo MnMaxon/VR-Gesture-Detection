@@ -13,16 +13,12 @@ public class Marker : MonoBehaviour {
 	public GameObject wandPrefab;
 	Hand hand;
     List<GameObject> spheres = new List<GameObject>();
-    List<Vector3> locs = new List<Vector3>(), oldLocs = new List<Vector3>();
-    List<int> seperators = new List<int>();
+    List<Vector3> locs = new List<Vector3>(), headForward = new List<Vector3>(), headPos = new List<Vector3>();
     bool triggerPressed = false;
-    string curtype = "Triangle";
     const int places = 1000;
     SymbolTensorChecker symbolTensorChecker = null;
-	bool spawnObs = true; // True to have it actually do something, false to have it draw new things
 	GameObject wand = null;
 	List<GameObject> topObs = new List<GameObject>();
-	bool passiveLearn = true;
 	bool lastZero = true;
 	bool currentlyFlying = false;
 	int rand;
@@ -41,14 +37,76 @@ public class Marker : MonoBehaviour {
 	{
 		GameObject handAttached = null;
 		Tool tool = null;
-		
-		if (hand.AttachedObjects.Count != 0) {
+
+		if (hand.AttachedObjects.Count != 0)
+		{
 			handAttached = hand.AttachedObjects[0].attachedObject;
 			tool = handAttached.GetComponent<Tool>();
-			foreach (GameObject obj in topObs) if(obj!=handAttached) Destroy(obj);
+			foreach (GameObject obj in topObs) if (obj != handAttached) Destroy(obj);
+		}
+		else {
+			string pythonGuess = GameInitializer.instance.recieved;
+			if (pythonGuess != null && pythonText != null)
+			{
+				GameInitializer.instance.recieved = null;
+				Debug.Log("Python Guess: " + pythonGuess);
+				string[] guess_ar = pythonGuess.Split('-');
+				if (guess_ar.Length >= 2)
+				{
+					Symbol[] topSymbols = new Symbol[3];
+					pythonGuess = guess_ar[0];
+					string[] guesses = pythonGuess.Split(' ');
+					pythonGuess = "";
+					int index = 0;
+					foreach (string num in guesses)
+					{
+
+						int x;
+						if (Int32.TryParse(num, out x))
+						{
+							if (index != 0) pythonGuess += " | ";
+							pythonGuess += SymbolHandler.fromId(x).getName();
+							topSymbols[index] = SymbolHandler.fromId(x);
+							index++;
+						}
+					}
+					Debug.Log(pythonGuess);
+					pythonText.text = pythonGuess;
+
+
+					float dis = .1F, hor = .3F;
+					Vector3 right = GameInitializer.instance.transform.right;
+					if (topSymbols[0].getHoverPrefab() != null)
+						topObs.Add(Instantiate(topSymbols[0].getHoverPrefab(), transform.position + transform.up * dis, Quaternion.identity));
+					if(topSymbols[1].getHoverPrefab()!=null)
+						topObs.Add(Instantiate(topSymbols[1].getHoverPrefab(), transform.position + transform.up * dis - right * hor, Quaternion.identity));
+					if (topSymbols[2].getHoverPrefab() != null)
+						topObs.Add(Instantiate(topSymbols[2].getHoverPrefab(), transform.position + transform.up * dis + right * hor, Quaternion.identity));
+					foreach (GameObject go in topObs)
+					{
+						Rigidbody rb = go.GetComponent<Rigidbody>();
+						if (rb != null) rb.useGravity = false;
+						Tool goTool = go.GetComponent<Tool>();
+						if (goTool != null)
+						{
+							TextMesh text = go.AddComponent<TextMesh>();
+							if (text != null)
+							{
+								Symbol symbol = goTool.getSymbol();
+								text.alignment = TextAlignment.Center;
+								text.anchor = TextAnchor.MiddleCenter;
+								text.characterSize = .001F;
+								text.fontSize = 500;
+								text.text = goTool.getName(gameObject);
+								if (symbol != null) text.text += "\n" + symbol.getName();
+							}
+						}
+					}
+				}
+			}
 		}
 
-		foreach (GameObject sphere in spheres) sphere.GetComponent<MeshRenderer>().material.color = symbolTensorChecker.getColor();
+		//foreach (GameObject sphere in spheres) sphere.GetComponent<MeshRenderer>().material.color = symbolTensorChecker.getColor();
 
 		if (hand.startAction.GetStateDown(hand.handType) && tool == null)
 			if (wand == null) PropHandler.save();
@@ -68,28 +126,7 @@ public class Marker : MonoBehaviour {
 				GameObject.Destroy(wand);
 				wand = null;
 				float[,] eval = symbolTensorChecker.debug();
-
-				string pythonGuess = SymbolHandler.python_guess(locs, seperators);
-				Debug.Log(pythonGuess);
-				if (pythonText != null)
-				{
-					pythonText.text = pythonGuess;
-				}
-
-				if (spawnObs)
-				{
-					List<KeyValuePair<int, float>> top = SymbolTensorChecker.topThree(eval);
-					Symbol[] topSymbols = new Symbol[3];
-					for(int i = 0; i < topSymbols.Length; i++) topSymbols[i] = SymbolHandler.fromId(top[i].Key);
-					float dis = .1F, hor = .3F;
-					topObs.Add(Instantiate(topSymbols[0].getHoverPrefab(), transform.position + transform.up * dis, Quaternion.identity));
-					topObs.Add(Instantiate(topSymbols[1].getHoverPrefab(), transform.position + transform.up * dis - transform.right * hor, Quaternion.identity));
-					topObs.Add(Instantiate(topSymbols[2].getHoverPrefab(), transform.position + transform.up * dis + transform.right * hor, Quaternion.identity));
-					foreach (GameObject go in topObs) {
-						Rigidbody rb = go.GetComponent<Rigidbody>();
-						if (rb != null) rb.useGravity = false;
-					}
-				} else WriteSpheres(curtype);
+				SymbolHandler.python_guess(locs, headPos, headForward);
 			}
 			ClearSpheres();
 		}
@@ -97,10 +134,7 @@ public class Marker : MonoBehaviour {
         if (hand.grabPinchAction.GetStateUp(hand.handType)) triggerPressed = false;
         if (triggerPressed)
         {
-			if (wand != null) {
-				if (hand.grabPinchAction.GetStateDown(hand.handType)) seperators.Add(locs.Count);
-				Spawn();
-			}
+			if (wand != null) Spawn();
         }
 
 		bool padActive = (hand.padTouch.GetAxis(hand.handType) * 50F).magnitude > 1;
@@ -146,53 +180,25 @@ public class Marker : MonoBehaviour {
         meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
         meshRenderer.material.color = symbolTensorChecker.getColor();
         locs.Add(sphere.transform.position - spheres[0].transform.position);
-    }
+		GameObject vrcam = GameInitializer.instance.FollowHead;
+		headForward.Add(vrcam.transform.forward);
+		headPos.Add(vrcam.transform.position - spheres[0].transform.position);
+	}
 
     void ClearSpheres()
     {
         foreach (GameObject go in spheres) Destroy(go);
         spheres.Clear();
         locs.Clear();
-		seperators.Clear();
+		headForward.Clear();
+		headPos.Clear();
 	}
 
     int round(float f) { return (int)(f * 1000F); }
 
-    //[MenuItem("Tools/Write file")]
-    void WriteSpheres(string type)
-    {
-        string dir = "Assets/Resources/DrawingData/" + type + "/";
-        string path = dir + type.ToLower() +DateTime.Now.ToString(" MM-dd-yyyy HH-mm-ss.fff") +".log";
-        System.IO.Directory.CreateDirectory(dir);
-		
-        Vector3 origin;
-        if (spheres.Count != 0)
-        {
-            string str = "";
-            origin = spheres[0].transform.position;
-			List<Vector3> vecs = new List<Vector3>();
-            foreach (GameObject sphere in spheres)
-            {
-                Vector3 p = origin - sphere.transform.position;
-                str+=round(p.x) + "," + round(p.y) + "," + round(p.z)+"\n";
-				vecs.Add(p);
-            }
-
-
-            using (StreamWriter writer = new StreamWriter(path))
-            {
-                writer.Write(str);
-                writer.Close();
-            }
-
-			//Saves the Matrix
-			SymbolHandler.getMatrix(vecs, path);
-        }
-	}
-
 	public float[,] getMatrix()
     {
-		return SymbolHandler.getMatrix(locs);
+		return SymbolHandler.getMatrix(locs, headPos, headForward);
     }
 
 	public List<Vector3> getLocList() { return locs; }

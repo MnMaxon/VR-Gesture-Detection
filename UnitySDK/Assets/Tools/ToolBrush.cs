@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class ToolBrush : Tool {
-
+	
 	Color[] colors = new Color[]{ Color.blue, Color.red, Color.yellow, Color.green, Color.black };
 	int currentColor = 0;
 	Selector sel;
 
 	// Use this for initialization
 	void Start () {
+		name = "Brush";
 		sel = new Selector(this);
 	}
 	

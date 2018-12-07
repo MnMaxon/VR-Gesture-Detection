@@ -77,13 +77,6 @@ public class SymbolTensorChecker : MonoBehaviour
 
 			// set up input tensor and input
 			// KEY: I am telling my session to go find the placeholder named "input_placeholder_x" and use my input TENSOR instead
-			if (runner == null) Debug.Log("Uh oh, no runner!");
-			if (graph == null) Debug.Log("Uh oh, no graph!");
-			if (graph["shape"] == null) Debug.Log("Uh oh, no shape!");
-			if (graph["ink"] == null) Debug.Log("Uh oh, no ink!");
-			if (graph["Count"] == null) Debug.Log("Uh oh, no Count!");
-			if (graph["count"] == null) Debug.Log("Uh oh, no count!");
-			if (graph["ParseSingleExample/ParseExample/ParseExample/sparse_keys_0"] == null) Debug.Log("Uh oh, no ParseSingleExample/ParseExample/ParseExample/sparse_keys_0!");
 
 			//runner.AddInput(graph["inp"][0], new float[][] { flat });
 			runner.AddInput(graph["inp"][0], new float[][] { flat });

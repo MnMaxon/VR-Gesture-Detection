@@ -72,8 +72,8 @@ public class PropHandler {
 		propObjects.Remove(go);
 	}
 
-	public static void snap(GameObject go) {
-		if (!usingSnap) return;
+	public static bool snap(GameObject go) {
+		if (!usingSnap) return false;
 
 		Vector3 mid1 = Vector3.left + Vector3.forward;
 		Vector3 mid2 = Vector3.left + Vector3.back;
@@ -141,7 +141,9 @@ public class PropHandler {
 		if (minMag < 1)
 		{
 			go.transform.position += minDis;
+			return true;
 		}
+		return false;
 	}
 
 	static Vector3[] getVertecies(GameObject go)

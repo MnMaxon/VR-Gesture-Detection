@@ -9,6 +9,7 @@ public class ToolDestroy : Tool {
 	// Use this for initialization
 	void Start()
 	{
+		name = "Destroy";
 		sel = new Selector(this);
 	}
 

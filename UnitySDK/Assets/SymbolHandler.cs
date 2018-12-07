@@ -12,7 +12,7 @@ public class SymbolHandler
 	const string basepath = "Assets/Resources/DrawingData/";
 
 	//static string[] symbols = new string[] { "Square", "Circle", "Star", "Brush", "Plus", "Triangle" };
-	static string[] symbols = new string[] { "Brush", "Circle", "Plus", "Square", "Star", "Triangle" };
+	static string[] symbols = new string[] { "Bed", "Chair", "Circle", "Diamond", "Door", "Dresser", "Floor Lamp", "House", "Square", "Squiggle", "Star", "Sun", "Triangle" };
 
 	static Dictionary<string, Symbol> symbolMap = new Dictionary<string, Symbol>();
 	public static bool updateAll = true;
@@ -20,94 +20,23 @@ public class SymbolHandler
 
 	static SymbolHandler()
 	{
-		for (int i = 0; i < symbols.Length; i++) symbolMap[symbols[i]] = new Symbol(symbols[i], i);
+		for (int i = 0; i < symbols.Length; i++) symbolMap[symbols[i].ToLower()] = new Symbol(symbols[i], i);
 	}
 
-	static string vecPathString(List<Vector3> locs) {
-		if (locs.Count == 0) return "";
-		List<Vector2> vec2s = calcVec2(locs);
-		List<Vector2> simplified = new List<Vector2>();
-		LineUtility.Simplify(vec2s, 2f, simplified);
-		vec2s = simplified;
-		string xstr = "", ystr = "";
-		for (int i = 0; i < vec2s.Count; i++)
-		{
-			if (i != 0)
-			{
-				xstr += ",";
-				ystr += ",";
-			}
-			xstr += vec2s[i].x;
-			ystr += vec2s[i].y;
-		}
-		return "[[" + xstr + "],[" + ystr + "]]";
-	}
-
-	public static string python_guess(List<Vector3> locs, List<int> seperators=null)
+	public static string python_guess(List<Vector3> locs, List<Vector3> headLocs, List<Vector3> headForwards)
 	{
-		if (seperators == null) seperators = new List<int>();
-		int sepIndex = 0;
-		string points = "";
-		List<Vector3> smallVecs = new List<Vector3>();
-		for (int i = 0; i < locs.Count; i++) {
-			if (false&&sepIndex < seperators.Count && i == seperators[sepIndex]) {
-				sepIndex++;
-				if (sepIndex != 1) points += ",";
-				points += vecPathString(smallVecs);
-				smallVecs.Clear();
-			}
-			smallVecs.Add(locs[i]);
-		}
-		points = "[" + points + vecPathString(smallVecs) + "]";
-
-		string path = "D:/Games/Coding/GoogleDraw - Copy/";
-		string filepath = "\"" + path + "classify.py\"";
-		string args = "";
-		args += " --classes_file=\"" + path + "rnn_tutorial_data/training.tfrecord.classes\"";
-		args += " --model_dir=\"" + path + "test\"";
-		args += " --predict_for_data=\"" + points + "\"";
-		ProcessStartInfo start = new ProcessStartInfo();
-		start.FileName = "C:/Users/Mason/AppData/Local/Programs/Python/Python36/python.exe"; //TODO Fix
-
-		start.Arguments = string.Format("{0} {1}", filepath, args);
-		start.UseShellExecute = false;
-		start.RedirectStandardOutput = true;
-		using (Process process = Process.Start(start))
-		{
-			using (StreamReader reader = process.StandardOutput)
-			{
-				string result = reader.ReadToEnd();
-				UnityEngine.Debug.Log("PYTHONN: '" + result + "'");
-				string[] split = result.Split('\n');
-				return split[split.Length-2].Split('~')[1];
-			}
-		}
+		string str = "";
+		foreach(float f in getMatrix(locs, headLocs, headForwards))
+			if (f < .5) str+=" ";
+			else str+="*";
+		GameInitializer.instance.SendData(str);
+		return null;
 	}
 
-	public static float[,] getMatrix(List<Vector3> locs, string filepath = null, bool old = false)
+	public static float[,] getMatrix(List<Vector3> locs, List<Vector3> headLocs, List<Vector3> headForwards, string filepath = null)
 	{
-		if (filepath == null) return calcMatrix(locs, old);
+		if (filepath == null) return calcMatrix(locs, headLocs, headForwards);
 		filepath = SymbolHandler.getMatrixPath(filepath);
-
-		string googfp = filepath.Replace("/" + inputSizeRoot + "/", "/goog/");
-		if (!File.Exists(googfp)) {
-			List<Vector2> vec2s = calcVec2(locs, old);
-			List<Vector2> simplified = new List<Vector2>();
-			LineUtility.Simplify(vec2s, 2f, simplified);
-			vec2s = simplified;
-			string xstr = "", ystr = "";
-			for (int i = 0; i < vec2s.Count; i++) {
-				if (i != 0) {
-					xstr += ",";
-					ystr += ",";
-				}
-				xstr += vec2s[i].x;
-				ystr += vec2s[i].y;
-			}
-			int last = googfp.LastIndexOf("/");
-			System.IO.Directory.CreateDirectory(googfp.Substring(0, last));
-			System.IO.File.WriteAllText(googfp, "[[["+xstr+"],["+ystr+"]]]");
-		}
 
 		if (File.Exists(filepath))
 		{
@@ -129,7 +58,7 @@ public class SymbolHandler
 		}		else
 		{
 
-			float[,] mat = calcMatrix(locs, old);
+			float[,] mat = calcMatrix(locs, headLocs, headForwards);
 			string text = "";
 			for (int i = 0; i < mat.GetLength(0); i++) {
 				for (int j = 0; j < mat.GetLength(1); j++) text += (mat[i, j] == 1) ? "*" : " ";
@@ -175,12 +104,17 @@ public class SymbolHandler
 		return filepath;
 	}
 
-	static float[,] calcMatrix(List<Vector3> locs, bool old = false)
+	static float axisDist(Vector3 point1, Vector3 point2, Vector3 axis) {
+		axis.Normalize();
+		return Vector3.Dot(axis, point1 - point2);
+	}
+
+	static float[,] calcMatrix(List<Vector3> locs, List<Vector3> headLocs, List<Vector3> headForwards)
 	{
 		float[,] mat = new float[inputSizeRoot, inputSizeRoot];
 
 		if (locs.Count == 0) { return mat; }
-		Plane plane = averagePlane(locs, old);
+		Plane plane = averagePlane(locs, headLocs, headForwards);
 		List<Vector3> tests = new List<Vector3>();
 		Vector3 min = locs[0], max = min;
 		tests.Add(min);
@@ -195,50 +129,29 @@ public class SymbolHandler
 
 		GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
 		cube.transform.position = new Vector3(0f, 1f, 2.5f);
-		cube.transform.right = plane.normal;
+		cube.transform.forward = plane.normal;
+		Vector3 right = cube.transform.right;
+		Vector3 up = -cube.transform.up;
 
-		max = max - min;
-		float maxVal = Mathf.Max(max.y, max.x);
-		float multVal = 0;
-		if (maxVal > 0) multVal = (float)(inputSizeRoot - 1) / maxVal;
-		float size = .02F;
-		cube.transform.localScale = new Vector3(size, size, size);
-		List<GameObject> newspheres = new List<GameObject>();
-		foreach (Vector3 vec in tests)
-		{
-			GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-			float s2 = .02F;
-			sphere.transform.localScale = new Vector3(s2, s2, s2);
+		if (true) {
+			max = new Vector3(0, 0, 0);
+			min = new Vector3(0, 0, 0);
+			List<Vector3> newLocs = new List<Vector3>();
 
-			sphere.transform.parent = cube.transform;
-			sphere.transform.position = vec - min + cube.transform.position;
-			newspheres.Add(sphere);
-		}
-		cube.transform.right = new Vector3(0, 0, 1);
-
-		locs.Clear();
-		while (newspheres.Count > 0)
-		{
-			GameObject sphere = newspheres[0];
-			Vector3 mod = sphere.transform.position - cube.transform.position;
-			if (locs.Count == 0)
+			foreach (Vector3 vec in tests)
 			{
-				min = mod;
-				max = mod;
+				Vector3 newVec = new Vector3(axisDist(vec, tests[0], right), axisDist(vec, tests[0], up), 0);
+				max = Vector3.Max(max, newVec);
+				min = Vector3.Min(min, newVec);
+				newLocs.Add(newVec);
 			}
-			else
-			{
-				min = Vector3.Min(min, mod);
-				max = Vector3.Max(max, mod);
-			}
-			locs.Add(mod);
-			newspheres.RemoveAt(0);
-			GameObject.Destroy(sphere);
+			locs = newLocs;
 		}
 		GameObject.Destroy(cube);
 
 		max = max - min;
-		maxVal = Mathf.Max(max.y, max.x);
+		float maxVal = Mathf.Max(max.y, max.x);
+		float multVal = 0;
 		if (maxVal > 0) multVal = (float)(inputSizeRoot - 1) / maxVal;
 		List<Vector3> velCheck = new List<Vector3>();
 		foreach (Vector3 loc in locs)
@@ -246,107 +159,18 @@ public class SymbolHandler
 			Vector3 mod = (loc - min) * multVal;
 			mod.z = 0;
 			velCheck.Add(mod);
-			mat[(int)mod.x, (int)mod.y] = 1;
-			if (old || velCheck.Count < 2) continue;
+			mat[(int)mod.y, (int)mod.x] = 1;
+			if (velCheck.Count < 2) continue;
 			Vector3 dist = velCheck[velCheck.Count - 1] - velCheck[velCheck.Count - 2];
 			if (dist.magnitude > 1)
 			{
 				mod += dist / 2;
 				mod = Vector3.Max(mod, new Vector3(0, 0, 0));
 				mod = Vector3.Min(mod, new Vector3(1, 1, 1) * (inputSizeRoot - 1));
-				mat[(int)mod.x, (int)mod.y] = 1;
+				mat[(int)mod.y, (int)mod.x] = 1;
 			}
 		}
-
 		return mat;
-	}
-
-	static List<Vector2> calcVec2(List<Vector3> locs, bool old = false)
-	{
-		List<Vector2> vec2s = new List<Vector2>();
-
-		if (locs.Count == 0) { return vec2s; }
-		Plane plane = averagePlane(locs, old);
-		List<Vector3> tests = new List<Vector3>();
-		Vector3 min = locs[0], max = min;
-		tests.Add(min);
-		for (int i = 1; i < locs.Count; i++)
-		{
-			Vector3 vec = plane.ClosestPointOnPlane(locs[i]);
-			max = Vector3.Max(max, vec);
-			min = Vector3.Min(min, vec);
-			tests.Add(vec);
-		}
-
-
-		GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-		cube.transform.position = new Vector3(0f, 1f, 2.5f);
-		cube.transform.right = plane.normal;
-
-		max = max - min;
-		float maxVal = Mathf.Max(max.y, max.x);
-		float multVal = 0;
-		if (maxVal > 0) multVal = (float)(255 - 1) / maxVal;
-		float size = .02F;
-		cube.transform.localScale = new Vector3(size, size, size);
-		List<GameObject> newspheres = new List<GameObject>();
-		foreach (Vector3 vec in tests)
-		{
-			GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-			float s2 = .02F;
-			sphere.transform.localScale = new Vector3(s2, s2, s2);
-
-			sphere.transform.parent = cube.transform;
-			sphere.transform.position = vec - min + cube.transform.position;
-			newspheres.Add(sphere);
-		}
-		cube.transform.right = new Vector3(0, 0, 1);
-
-		locs.Clear();
-		while (newspheres.Count > 0)
-		{
-			GameObject sphere = newspheres[0];
-			Vector3 mod = sphere.transform.position - cube.transform.position;
-			if (locs.Count == 0)
-			{
-				min = mod;
-				max = mod;
-			}
-			else
-			{
-				min = Vector3.Min(min, mod);
-				max = Vector3.Max(max, mod);
-			}
-			locs.Add(mod);
-			newspheres.RemoveAt(0);
-			GameObject.Destroy(sphere);
-		}
-		GameObject.Destroy(cube);
-
-		max = max - min;
-		maxVal = Mathf.Max(max.y, max.x);
-		if (maxVal > 0) multVal = (float)(255 - 1) / maxVal;
-		List<Vector3> velCheck = new List<Vector3>();
-		foreach (Vector3 loc in locs)
-		{
-			Vector3 mod = (loc - min) * multVal;
-			mod.z = 0;
-			velCheck.Add(mod);
-			vec2s.Add(new Vector2((int)mod.x, (int)mod.y));
-			
-			// Guesses missed points
-			//if (old || velCheck.Count < 2) continue;
-			//Vector3 dist = velCheck[velCheck.Count - 1] - velCheck[velCheck.Count - 2];
-			//if (dist.magnitude > 1)
-			//{
-			//	mod += dist / 2;
-			//	mod = Vector3.Max(mod, new Vector3(0, 0, 0));
-			//	mod = Vector3.Min(mod, new Vector3(1, 1, 1) * (inputSizeRoot - 1));
-			//	mat[(int)mod.x, (int)mod.y] = 1;
-			//}
-		}
-
-		return vec2s;
 	}
 
 	public static string display2D(float[,] mat, TextMesh textMesh = null)
@@ -368,15 +192,31 @@ public class SymbolHandler
 		return str;
 	}
 
-	public static Plane averagePlane(List<Vector3> locs, bool old = false) {
+	public static Plane averagePlane(List<Vector3> locs, List<Vector3> headLocs, List<Vector3> headForwards) {
 		Plane plane = new Plane();
 		Vector3 avgNormal = new Vector3(0, 0, 0), avgVec = new Vector3(0, 0, 0);
 		int amount = 0;
-		for (int i = 0; i< locs.Count; i++) avgVec += locs[i];
+		int good = 0;
+		for (int i = 0; i < locs.Count; i++) {
+			if (headLocs != null) {
+				float diff = Vector3.Dot(headForwards[i], headLocs[i] - locs[i]);
+				//UnityEngine.Debug.Log(i+": " + diff);
+				if (diff < -.2 || true) {
+					good++;
+					avgNormal += headForwards[i];
+				}
+			}
+			avgVec += locs[i];
+		}
 		avgVec /= locs.Count;
+		if (good > 5)
+		{
+			plane.SetNormalAndPosition(avgNormal, avgVec);
+			return plane;
+		}
+		avgNormal = new Vector3(0, 0, 0);
 		IEnumerable<Vector3> randLocs;
-		if (old) randLocs = locs;
-		else randLocs = Shuffle(locs, new System.Random());
+		randLocs = Shuffle(locs, new System.Random());
 		for (int i = 0; i + 2 < locs.Count; i += 2)
 		{
 			amount++;
@@ -430,6 +270,7 @@ public class SymbolHandler
 	}
 
 	public static Symbol fromName(string name) {
+		name = name.ToLower();
 		if(symbolMap.ContainsKey(name)) return symbolMap[name];
 		return null;
 	}
@@ -440,7 +281,7 @@ public class SymbolHandler
 		foreach (string direc in Directory.GetDirectories(basepath))
 			foreach (FileInfo file in new DirectoryInfo(direc).GetFiles("*.log"))
 				if (!File.Exists(direc + "/" + inputSizeRoot + "/" + file.Name) || !File.Exists(direc + "/goog/" + file.Name))
-					getMatrix(getVectorsFromFile(direc + "/" + file.Name), direc + "/" + file.Name);
+					getMatrix(getVectorsFromFile(direc + "/" + file.Name), null, null, direc + "/" + file.Name);
 		updateAll = false;
 	}
 

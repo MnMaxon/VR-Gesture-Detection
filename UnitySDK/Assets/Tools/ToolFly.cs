@@ -5,11 +5,10 @@ using Valve.VR.InteractionSystem;
 
 public class ToolFly : Tool
 {
-
 	// Use this for initialization
 	void Start()
 	{
-
+		name = "Toggle Fly";
 	}
 
 	// Update is called once per frame
@@ -23,5 +22,13 @@ public class ToolFly : Tool
 		Hand hand = handOb.GetComponent<Hand>();
 		hand.flying = !hand.flying;
 		Destroy(gameObject);
+	}
+
+	public override string getName(GameObject handOb)
+	{
+		Hand hand = handOb.GetComponent<Hand>();
+		string enable = "Enable";
+		if(hand.flying) enable = "Disable";
+		return enable + " Flying";
 	}
 }
