@@ -7,7 +7,6 @@ public class ToolSnap : Tool {
 
 	// Use this for initialization
 	void Start () {
-		name = "Toggle Snap";
 	}
 
 	// Update is called once per frame
@@ -17,7 +16,7 @@ public class ToolSnap : Tool {
 		Destroy(gameObject);
 	}
 
-	public string getName() {
+	public override string getName() {
 		string enable = "Enable";
 		if (PropHandler.usingSnap) enable = "Disable";
 		return enable + " Snap";

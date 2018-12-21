@@ -8,13 +8,6 @@ public class ToolFly : Tool
 	// Use this for initialization
 	void Start()
 	{
-		name = "Toggle Fly";
-	}
-
-	// Update is called once per frame
-	void Update()
-	{
-
 	}
 
 	public override void handUpdate(GameObject handOb)

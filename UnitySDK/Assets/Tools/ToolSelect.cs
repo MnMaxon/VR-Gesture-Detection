@@ -9,11 +9,13 @@ public class ToolSelect : Tool {
 	static ToolSelect tool1 = null, tool2 = null;
 	int snapCool = 0;
 	Vector3 lastScale = new Vector3(0, 0, 0);
+	Vector3 initPosition;
+	Quaternion initRotation;
+	Vector3 initLocalScale;
 
 	// Use this for initialization
 	void Start()
 	{
-		name = "Mover";
 		sel = new Selector(this);
 	}
 
@@ -30,10 +32,12 @@ public class ToolSelect : Tool {
 				if (pinch)
 				{
 					propObject = sel.getSelected().gameObject;
-					//ToolRemote.SetAllCollision(propObject, false);
+					initPosition = propObject.transform.position;
+					initRotation = propObject.transform.rotation;
+					initLocalScale = propObject.transform.localScale;
 				}
 			}
-		}else if (propObject != null)
+		} else if (propObject != null)
 		{
 			color = Color.green;
 			if (tool1 != null && tool2 != null && tool1.propObject == tool2.propObject) {
@@ -52,7 +56,8 @@ public class ToolSelect : Tool {
 			if (pinch)
 			{
 				ToolRemote.SetAllCollision(propObject, true);
-				PropHandler.track(propObject);
+				//PropHandler.track(propObject);
+				addUndo();
 				propObject = null;
 			}
 		}
@@ -61,6 +66,20 @@ public class ToolSelect : Tool {
 
 	public void OnDestroy()
 	{
-		if(propObject != null) ToolRemote.SetAllCollision(propObject, true);
+		if (propObject != null)
+		{
+			ToolRemote.SetAllCollision(propObject, true);
+			addUndo();
+		}
+	}
+
+	public void addUndo() {
+		Prop prop = propObject.GetComponent<Prop>();
+		RedoManager.addRedoObject(new UnmoveObject(prop.propObjectId, initPosition, initRotation, initLocalScale, prop.name));
+	}
+
+	public override string getName()
+	{
+		return "Mover";
 	}
 }

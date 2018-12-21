@@ -10,13 +10,7 @@ public class ToolBrush : Tool {
 
 	// Use this for initialization
 	void Start () {
-		name = "Brush";
 		sel = new Selector(this);
-	}
-	
-	// Update is called once per frame
-	void Update () {
-
 	}
 
 	public override void handUpdate(GameObject handOb, bool pinch, bool startButton)
@@ -40,16 +34,16 @@ public class ToolBrush : Tool {
 		sel.select(handOb);
 		
 		Color color = Color.gray;
-		//color = colors[currentColor];
 
-		if (sel.getSelected() != null) {
-			Renderer rend = sel.getHitObect().GetComponent<Renderer>();
-			if (rend != null)
-			{
-				if(pinch) rend.material.color = colors[currentColor];
-				color = colors[currentColor];
-			}
+		if (sel.getSelected() != null && sel.getHitObect().GetComponent<Renderer>() != null) {
+			if(colors[currentColor] != Color.black) color = colors[currentColor];
+			if (pinch) sel.getSelected().paintObject(sel.getHitObect(), colors[currentColor], true, true);
 		}
 		sel.drawLine(color);
+	}
+
+	public override string getName()
+	{
+		return "Brush";
 	}
 }

@@ -12,29 +12,39 @@ public class Marker : MonoBehaviour {
 	public static int inputSizeRoot = 28;
 	public GameObject wandPrefab;
 	Hand hand;
-    List<GameObject> spheres = new List<GameObject>();
+    List<GameObject> spheres = new List<GameObject>(), toolTips = new List<GameObject>();
     List<Vector3> locs = new List<Vector3>(), headForward = new List<Vector3>(), headPos = new List<Vector3>();
     bool triggerPressed = false;
     const int places = 1000;
-    SymbolTensorChecker symbolTensorChecker = null;
 	GameObject wand = null;
 	List<GameObject> topObs = new List<GameObject>();
 	bool lastZero = true;
 	bool currentlyFlying = false;
 	int rand;
 	Vector3 lastFly;
-	public TextMesh pythonText = null;
+	//public TextMesh pythonText = null;
+	Selector sel;
+	GameObject saveMenu = null;
+	static bool pythonGuessing = false;
+	bool instancePythonGuessing = false;
 
 	// Use this for initialization
 	void Start () {
+		sel = new Selector(this, lookingForButton: true);
         //Controller = gameObject.GetComponent("SteamVR_TrackedObject") as SteamVR_TrackedObject;
         hand = gameObject.GetComponent("Hand") as Hand;
-		symbolTensorChecker = gameObject.GetComponent("SymbolTensorChecker") as SymbolTensorChecker;
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
+		sel.select(hand.gameObject);
+		if (sel.getHitObect() == null || sel.button == null) sel.drawLine(new Color(0, 0, 0, 0));
+		else {
+			sel.drawLine(Color.cyan);
+			if (hand.grabPinchAction.GetStateDown(hand.handType)) sel.button.press();
+		}
+
 		GameObject handAttached = null;
 		Tool tool = null;
 
@@ -43,11 +53,14 @@ public class Marker : MonoBehaviour {
 			handAttached = hand.AttachedObjects[0].attachedObject;
 			tool = handAttached.GetComponent<Tool>();
 			foreach (GameObject obj in topObs) if (obj != handAttached) Destroy(obj);
+			foreach (GameObject obj in toolTips) Destroy(obj);
 		}
 		else {
 			string pythonGuess = GameInitializer.instance.recieved;
-			if (pythonGuess != null && pythonText != null)
+			if (pythonGuess != null && instancePythonGuessing)
 			{
+				pythonGuessing = false;
+				instancePythonGuessing = false;
 				GameInitializer.instance.recieved = null;
 				Debug.Log("Python Guess: " + pythonGuess);
 				string[] guess_ar = pythonGuess.Split('-');
@@ -71,7 +84,7 @@ public class Marker : MonoBehaviour {
 						}
 					}
 					Debug.Log(pythonGuess);
-					pythonText.text = pythonGuess;
+					//pythonText.text = pythonGuess;
 
 
 					float dis = .1F, hor = .3F;
@@ -82,25 +95,23 @@ public class Marker : MonoBehaviour {
 						topObs.Add(Instantiate(topSymbols[1].getHoverPrefab(), transform.position + transform.up * dis - right * hor, Quaternion.identity));
 					if (topSymbols[2].getHoverPrefab() != null)
 						topObs.Add(Instantiate(topSymbols[2].getHoverPrefab(), transform.position + transform.up * dis + right * hor, Quaternion.identity));
+					int i = 0;
 					foreach (GameObject go in topObs)
 					{
+						while (topSymbols[i].getHoverPrefab() == null) i++;
 						Rigidbody rb = go.GetComponent<Rigidbody>();
 						if (rb != null) rb.useGravity = false;
 						Tool goTool = go.GetComponent<Tool>();
 						if (goTool != null)
 						{
-							TextMesh text = go.AddComponent<TextMesh>();
-							if (text != null)
-							{
-								Symbol symbol = goTool.getSymbol();
-								text.alignment = TextAlignment.Center;
-								text.anchor = TextAnchor.MiddleCenter;
-								text.characterSize = .001F;
-								text.fontSize = 500;
-								text.text = goTool.getName(gameObject);
-								if (symbol != null) text.text += "\n" + symbol.getName();
-							}
+							GameObject toolTip = Instantiate(GameInitializer.instance.textTooltipPrefab);
+							toolTips.Add(toolTip);
+							toolTip.transform.parent = go.transform;
+							toolTip.transform.localPosition = new Vector3(0, -.05F, 0);
+							TextMesh text = toolTip.GetComponent<TextMesh>();
+							text.text = goTool.getName(gameObject) + "\n" + topSymbols[i].getName();
 						}
+						i++;
 					}
 				}
 			}
@@ -109,12 +120,13 @@ public class Marker : MonoBehaviour {
 		//foreach (GameObject sphere in spheres) sphere.GetComponent<MeshRenderer>().material.color = symbolTensorChecker.getColor();
 
 		if (hand.startAction.GetStateDown(hand.handType) && tool == null)
-			if (wand == null) PropHandler.save();
-			else PropHandler.load();
+			if (wand == null) toggleSaveMenu();
+			else toggleSaveMenu();
 
 		//if (hand.grabGripAction.GetStateDown(hand.handType)) curColor = (curColor + 1) % colors.Length;
 		if (hand.grabGripAction.GetStateDown(hand.handType))
 		{
+			if (saveMenu == null) Destroy(saveMenu);
 			if (wand == null) {
 				wand = Instantiate(wandPrefab, new Vector3(0, 0, 0), Quaternion.identity);
 				hand.AttachScripted(wand);
@@ -125,8 +137,13 @@ public class Marker : MonoBehaviour {
 			} else {
 				GameObject.Destroy(wand);
 				wand = null;
-				float[,] eval = symbolTensorChecker.debug();
-				SymbolHandler.python_guess(locs, headPos, headForward);
+				//float[,] eval = symbolTensorChecker.debug();
+				if (locs.Count > 0 && !pythonGuessing)
+				{
+					pythonGuessing = true;
+					instancePythonGuessing = true;
+					SymbolHandler.python_guess(locs, headPos, headForward);
+				}
 			}
 			ClearSpheres();
 		}
@@ -178,7 +195,6 @@ public class Marker : MonoBehaviour {
         sphere.transform.localScale = new Vector3(size,size,size);
         MeshRenderer meshRenderer = sphere.GetComponent<MeshRenderer>();
         meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        meshRenderer.material.color = symbolTensorChecker.getColor();
         locs.Add(sphere.transform.position - spheres[0].transform.position);
 		GameObject vrcam = GameInitializer.instance.FollowHead;
 		headForward.Add(vrcam.transform.forward);
@@ -202,5 +218,17 @@ public class Marker : MonoBehaviour {
     }
 
 	public List<Vector3> getLocList() { return locs; }
+
+
+	public void toggleSaveMenu()
+	{
+		if (saveMenu == null)
+		{
+			saveMenu = Instantiate(GameInitializer.instance.saveMenu, gameObject.transform);
+			//saveMenu.transform.up = gameObject.transform.forward;
+			//saveMenu.transform.right = gameObject.transform.right;
+		}
+		else GameObject.Destroy(saveMenu);
+	}
 
 }

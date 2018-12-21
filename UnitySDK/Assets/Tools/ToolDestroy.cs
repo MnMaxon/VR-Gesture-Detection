@@ -9,14 +9,7 @@ public class ToolDestroy : Tool {
 	// Use this for initialization
 	void Start()
 	{
-		name = "Destroy";
 		sel = new Selector(this);
-	}
-
-
-	// Update is called once per frame
-	void Update () {
-		
 	}
 
 
@@ -26,8 +19,18 @@ public class ToolDestroy : Tool {
 		Color color = Color.gray;
 		if (sel.getSelected() != null) {
 			color = Color.red;
-			if (pinch) Destroy(sel.getSelected().gameObject);
+			if (pinch) {
+				UnmoveObject unmoveObject = new UnmoveObject(sel.getSelected().propObjectId, sel.getSelected().gameObject.transform, sel.getSelected().name, sel.getSelected().paintHistory);
+				RedoManager.addRedoObject(unmoveObject);
+				PropHandler.untrack(sel.getSelected().gameObject, true);
+			}
 		}
 		sel.drawLine(color);
+	}
+
+
+	public override string getName()
+	{
+		return "Destroy";
 	}
 }

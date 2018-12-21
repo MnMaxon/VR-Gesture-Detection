@@ -11,6 +11,8 @@ from keras.backend.tensorflow_backend import set_session
 
 
 def main():
+    cwd = os.getcwd()
+    cwd = 'D:/Unity Projects/ml-agents-master/QuickDraw-master'
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
     config.log_device_placement = False  # to log device placement (on which device the operation ran)
@@ -18,9 +20,9 @@ def main():
     sess = tf.Session(config=config)
     set_session(sess)  # set this TensorFlow session as the default session for Keras
 
-    model = load_model('QuickDraw.h5')
+    model = load_model(cwd +'/QuickDraw.h5')
 
-    with open('test.txt', 'r') as myfile:
+    with open(cwd + '/test.txt', 'r') as myfile:
         square=myfile.read().replace('\n', '')
     pred_probab, pred_class = keras_predict(model, np.array(stars_to_ar(square)))
     print(pred_class, pred_probab)
@@ -45,8 +47,10 @@ def main():
             data = data[2:len(data)-1]
             lines = data.split('--')
             data = lines[len(lines)-2]
+			
+            print("Received "+ data)
 
-            if data == "":
+            if data == "Kill":
                 client.send(str.encode("Bye!"))
                 print ("Bye! Unity Sent: \"" + str(data)+"\"")
                 client.close()
@@ -82,7 +86,7 @@ def top_predict(model, image):
     sorted = list(pred_probab)
     sorted.sort(reverse = True)
     pred_class = list(pred_probab).index(max(pred_probab))
-    for i in range(len(pred_probab)): print(str(i)+": "+str(pred_probab[i]))
+    #for i in range(len(pred_probab)): print(str(i)+": "+str(pred_probab[i]))
     indexes = []
     for prob in sorted: indexes.append(list(pred_probab).index(prob))
     return indexes

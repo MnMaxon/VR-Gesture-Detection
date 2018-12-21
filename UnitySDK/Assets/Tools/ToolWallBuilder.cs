@@ -10,7 +10,6 @@ public class ToolWallBuilder : Tool {
 
 	// Use this for initialization
 	void Start () {
-		name = "Wall Builder";
 		sel = new Selector(this);
 	}
 	
@@ -21,5 +20,10 @@ public class ToolWallBuilder : Tool {
 
 	public override void handUpdate(GameObject handOb, bool pinch, bool startButton)
 	{
+	}
+
+	public override string getName()
+	{
+		return "Wall Builder";
 	}
 }

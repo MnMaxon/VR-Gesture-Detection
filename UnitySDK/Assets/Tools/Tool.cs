@@ -1,12 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Valve.VR;
 using Valve.VR.InteractionSystem;
 
 public class Tool : MonoBehaviour {
-
-	string name = "None";
 	public Symbol symbol = null;
+	bool first = true;
 
 	// Use this for initialization
 	void Start () {
@@ -15,7 +15,17 @@ public class Tool : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		
+		if (first) {
+			Transform p1 = gameObject.transform.parent;
+			if (p1 == null) return;
+			first = false;
+			Hand hand = p1.gameObject.GetComponent<Hand>();
+			first = false;
+			if (hand.handType != SteamVR_Input_Sources.LeftHand) return;
+			gameObject.transform.up = hand.transform.up;
+			gameObject.transform.right = hand.transform.right;
+			gameObject.transform.forward = hand.transform.forward;
+		}
 	}
 
 	public void Drop() {
@@ -23,7 +33,7 @@ public class Tool : MonoBehaviour {
 		Destroy(gameObject.GetComponent<Throwable>());
 	}
 
-	public string getName() { return name; }
+	public virtual string getName() { return "None"; }
 
 	public virtual string getName(GameObject handOb) { return getName(); }
 

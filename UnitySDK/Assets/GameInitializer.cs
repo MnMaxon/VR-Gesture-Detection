@@ -10,7 +10,10 @@ using UnityEngine;
 public class GameInitializer : MonoBehaviour {
 	public static GameInitializer instance;
 
-	public TextAsset graphModel;
+	public GameObject propMenu;
+	public GameObject saveMenu;
+	public GameObject textTooltipPrefab;
+	//public TextAsset graphModel;
 	public GameObject FollowHead;
 	public GameObject squareHoverPrefab;
 	public GameObject circleHoverPrefab;
@@ -18,18 +21,26 @@ public class GameInitializer : MonoBehaviour {
 	public GameObject diamondHoverPrefab;
 	public GameObject squiggleHoverPrefab;
 	public GameObject triangleHoverPrefab;
+	public GameObject furniturePrefab;
+	public GameObject wallBuilderPrefab;
+	public GameObject lightPrefab;
+	public GameObject chairPrefab;
+	public GameObject sunPrefab;
 
 	public GameObject[] props;
+
+	public Material outlineMat, clearMat;
 
 	private Socket _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 	private byte[] _recieveBuffer = new byte[8142];
 
-	String host = "localhost";
-	Int32 port = 50035;
+	Int32 port = 50003;
 	public string recieved = null;
 
 	internal Boolean socket_ready = false;
 	internal String input_buffer = "";
+
+	Process python;
 
 	TcpClient tcp_socket;
 	NetworkStream net_stream;
@@ -39,10 +50,8 @@ public class GameInitializer : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		python();
-
 		instance = this;
-		SymbolHandler.graphModel = graphModel;
+		//SymbolHandler.graphModel = graphModel;
 
 		Symbol square = SymbolHandler.fromName("Square");
 		Symbol circle = SymbolHandler.fromName("Circle");
@@ -50,6 +59,13 @@ public class GameInitializer : MonoBehaviour {
 		Symbol diamond = SymbolHandler.fromName("Diamond");
 		Symbol squiggle = SymbolHandler.fromName("Squiggle");
 		Symbol triangle = SymbolHandler.fromName("Triangle");
+		SymbolHandler.fromName("Door").setHoverPrefab(furniturePrefab);
+		SymbolHandler.fromName("Bed").setHoverPrefab(furniturePrefab);
+		SymbolHandler.fromName("Dresser").setHoverPrefab(furniturePrefab);
+		SymbolHandler.fromName("Sun").setHoverPrefab(sunPrefab);
+		SymbolHandler.fromName("Floor Lamp").setHoverPrefab(lightPrefab);
+		SymbolHandler.fromName("House").setHoverPrefab(wallBuilderPrefab);
+		SymbolHandler.fromName("Chair").setHoverPrefab(chairPrefab);
 
 		square.setHoverPrefab(squareHoverPrefab);
 		circle.setHoverPrefab(circleHoverPrefab);
@@ -60,44 +76,59 @@ public class GameInitializer : MonoBehaviour {
 
 		foreach (GameObject go in props) PropHandler.register(go);
 
-		SetupServer();
+		startPython();
+		StartCoroutine(SetupServer());
 
 	}
-
+	
 	void Update()
 	{
 		//SendData("ping");
 	}
 
-	public void python(){
-        ProcessStartInfo pythonInfo = new ProcessStartInfo ();
-        Process python;
+	public void startPython(){
+        ProcessStartInfo pythonInfo = new ProcessStartInfo();
         pythonInfo.FileName= @"C:\Users\Mason\AppData\Local\Programs\Python\Python36\python.exe";
-        pythonInfo.Arguments= @"D:\Unity Projects\ml-agents-master\QuickDraw-master\MyQD.py";
+        pythonInfo.Arguments= "\"D:/Unity Projects/ml-agents-master/QuickDraw-master/MyQD.py\"";
         pythonInfo.CreateNoWindow = false;
         pythonInfo.UseShellExecute = false;
-        python = Process.Start (pythonInfo);
+		pythonInfo.RedirectStandardInput = false;
+		pythonInfo.RedirectStandardOutput = false;
+		python = Process.Start (pythonInfo);
         //python.WaitForExit ();
         //python.Close ();
     }
 
 	void OnApplicationQuit()
 	{
+		SendData("Kill");
 		_clientSocket.Close();
+		python.Close();
 	}
 
-	private void SetupServer()
+	IEnumerator SetupServer(int count = 0)
 	{
+		if (count < 30) yield return null;
+		bool failed = false;
 		try
 		{
-			_clientSocket.Connect(new IPEndPoint(IPAddress.Loopback, 50003));
+			_clientSocket.Connect(new IPEndPoint(IPAddress.Loopback, port));
 		}
-		catch (SocketException ex)
+		catch (Exception ex)
 		{
 			UnityEngine.Debug.Log(ex.Message);
+			failed = true;
 		}
-
-		_clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
+		if (failed)
+		{
+			yield return new WaitForSeconds(5);
+			StartCoroutine(SetupServer(count + 1));
+		}
+		else
+		{
+			_clientSocket.BeginReceive(_recieveBuffer, 0, _recieveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
+			yield return null;
+		}
 
 	}
 
@@ -115,13 +146,14 @@ public class GameInitializer : MonoBehaviour {
 
 		//Process data here the way you want , all your bytes will be stored in recData
 		this.recieved = System.Text.Encoding.Default.GetString(_recieveBuffer);
-		UnityEngine.Debug.Log(recieved);
+		UnityEngine.Debug.Log(this.recieved);
 		//SendData("ping");
 	}
 
 	public void SendData(string data)
 	{
 		data += "--";
+		UnityEngine.Debug.Log("PRINTING " + data);
 		SocketAsyncEventArgs socketAsyncData = new SocketAsyncEventArgs();
 		socketAsyncData.SetBuffer(System.Text.Encoding.Default.GetBytes(data), 0, data.Length);
 		_clientSocket.SendAsync(socketAsyncData);

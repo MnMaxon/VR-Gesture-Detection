@@ -5,13 +5,14 @@ using UnityEngine;
 public class Selector {
 
 	Prop selected = null;
+	public PointButton button = null;
 	float distance;
 	Vector3 dir, handObLoc;
 	LineRenderer lr = null;
 	bool hitOb = false;
 	GameObject hitGameObject = null;
 
-	public Selector(MonoBehaviour parent, float lineWidth = .06F)
+	public Selector(MonoBehaviour parent, float lineWidth = .06F, bool lookingForButton = false)
 	{
 		if (parent == null) return;
 		lr = parent.gameObject.AddComponent<LineRenderer>();
@@ -35,11 +36,9 @@ public class Selector {
 		hitOb = false;
 		RaycastHit hit= new RaycastHit();
 		RaycastHit[] hits = Physics.RaycastAll(getRayStart(), dir, maxDist);
-		Debug.Log(hits.Length);
 		distance = maxDist;
 		for (int i = 0; i < hits.Length; i++)
 		{
-			Debug.Log(hits[i].collider.gameObject+": " + hits[i].distance);
 			if (hits[i].distance < distance
 				&&  (ignored == null || PropHandler.getOldestParent(hits[i].collider.gameObject) != ignored)
 				)
@@ -52,10 +51,18 @@ public class Selector {
 		}
 		if (hitOb)
 		{
+			if (button != null) {
+				Renderer renderer = button.GetComponent<Renderer>();
+				if (renderer != null) renderer.material = GameInitializer.instance.clearMat;
+			}
 			selected = PropHandler.getOldestParent(hit.collider.gameObject).GetComponent<Prop>();
+			button = hit.collider.gameObject.GetComponent<PointButton>();
+			if (button != null && !button.canSelect()) button = null;
 			hitGameObject = hit.collider.gameObject;
-			Debug.Log("WINNER: " + hitGameObject);
-			//Debug.Log(PathString(hitGameObject));
+			if (button != null) {
+				Renderer renderer = button.GetComponent<Renderer>();
+				if(renderer != null) renderer.material = GameInitializer.instance.outlineMat;
+			}
 		}
 	}
 

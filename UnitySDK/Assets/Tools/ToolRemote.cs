@@ -9,10 +9,10 @@ public class ToolRemote : Tool {
 	Quaternion presnapped;
 	bool usepresnapped = false;
 	int snapCool = 0;
+	GameObject propMenu = null;
 
 	// Use this for initialization
 	void Start () {
-		name = "Spawn Remote";
 		sel = new Selector(this);
 	}
 
@@ -29,14 +29,27 @@ public class ToolRemote : Tool {
 		}
 	}
 
-	public override void handUpdate(GameObject handOb, bool pinch, bool startButton, Vector2 delta, bool touchedPad)  {
-		if (startButton) modCurrentProp(1);
-		if (propObject == null)
-		{
-			propObject = Instantiate(PropHandler.props[PropHandler.nameList[currentProp]], new Vector3(0, 0, 0), Quaternion.identity);
-			SetAllCollision(propObject, false);
-			usepresnapped = false;
+	public void openPropMenu(string cat = "All", int page = 0)
+	{
+		if (propMenu == null) {
+			propMenu = Instantiate(GameInitializer.instance.propMenu, gameObject.transform);
+			propMenu.GetComponent<PropPicker>().toolRemote = this;
 		}
+		propMenu.GetComponent<PropPicker>().setCategory(cat, page);
+	}
+
+	public void setPropObject(GameObject prefab) {
+		if (propObject != null) Destroy(propObject);
+		propObject = Instantiate(prefab, new Vector3(0, 0, 0), Quaternion.identity);
+		SetAllCollision(propObject, false);
+		usepresnapped = false;
+	}
+
+	public override void handUpdate(GameObject handOb, bool pinch, bool startButton, Vector2 delta, bool touchedPad)  {
+		if (startButton)
+			if (propMenu != null) GameObject.Destroy(propMenu);
+			else openPropMenu();
+		if (propObject == null) setPropObject(PropHandler.props[PropHandler.nameList[currentProp]]);
 
 		sel.select(handOb);
 		Color color = Color.red;
@@ -60,6 +73,8 @@ public class ToolRemote : Tool {
 			if (pinch) {
 				SetAllCollision(propObject, true);
 				PropHandler.track(propObject);
+				Prop prop = propObject.GetComponent<Prop>();
+				RedoManager.addRedoObject(new UncreateObject(prop.propObjectId));
 				propObject = null;
 			}
 		}
@@ -83,5 +98,10 @@ public class ToolRemote : Tool {
 	public void OnDestroy()
 	{
 		Destroy(propObject);
+	}
+
+	public override string getName()
+	{
+		return "Spawn Remote";
 	}
 }

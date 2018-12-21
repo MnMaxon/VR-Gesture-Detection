@@ -5,14 +5,18 @@ using UnityEngine;
 
 public class PropHandler {
 	public static Dictionary<string, GameObject> props = new Dictionary<string, GameObject>();
-	public static List<string> nameList = new List<string>();
+	public static Dictionary<string, List<GameObject>> categories = new Dictionary<string, List<GameObject>>();
+	public static List<string> nameList = new List<string>(), categoryList = new List<string>();
 	public static List<GameObject> spheres = new List<GameObject>();
-	public static List<GameObject> propObjects = new List<GameObject>();
+	//public static List<GameObject> propObjects = new List<GameObject>();
+	static Dictionary<int, GameObject> propDict = new Dictionary<int, GameObject>();
 	public static bool usingSnap = false;
 
-	public static void save() {
+	public static void save(string path = "save", int count = -1) {
+		if (count >= 0) path = path + count;
 		string str = "";
-		foreach (GameObject go in propObjects) {
+		foreach (int key in propDict.Keys) {
+			GameObject go = propDict[key];
 			Prop prop = go.GetComponent<Prop>();
 			str += prop.name + "|||" + go.transform.position.x + "," + go.transform.position.y + "," + go.transform.position.z + "|||"
 				+ go.transform.localScale.x + "," + go.transform.localScale.y + "," + go.transform.localScale.z + "|||"
@@ -21,7 +25,7 @@ public class PropHandler {
 		}
 		Debug.Log("We SAVED: " + str);
 		string dir = "Assets/saves/";
-		string path = dir + "save1.txt";
+		path = dir + path + ".txt";
 		System.IO.Directory.CreateDirectory(dir);
 
 		using (StreamWriter writer = new StreamWriter(path))
@@ -31,11 +35,12 @@ public class PropHandler {
 		}
 	}
 
-	public static void load()
+	public static void load(string path = "save", int count = -1)
 	{
-		propObjects.Clear();
+		if (count >= 0) path = path + count;
+		untrackAll(true);
 
-		System.IO.StreamReader file = new System.IO.StreamReader("Assets/saves/save1.txt");
+		System.IO.StreamReader file = new System.IO.StreamReader("Assets/saves/"+path+".txt");
 		string line;
 		while ((line = file.ReadLine()) != null) {
 			string[] info = line.Split(new string[] { "|||" }, System.StringSplitOptions.None);
@@ -45,8 +50,10 @@ public class PropHandler {
 			GameObject propObj = GameObject.Instantiate(props[info[0]], new Vector3(float.Parse(posInfo[0]), float.Parse(posInfo[1]), float.Parse(posInfo[2])),
 				new Quaternion(float.Parse(quatInfo[0]), float.Parse(quatInfo[1]), float.Parse(quatInfo[2]), float.Parse(quatInfo[3])));
 			propObj.transform.localScale = new Vector3(float.Parse(scaleInfo[0]), float.Parse(scaleInfo[1]), float.Parse(scaleInfo[2]));
-			propObjects.Add(propObj);
+			track(propObj);
+			Debug.Log("ADDED:" + propObj);
 		}
+		file.Close();
 	}
 
 	public static void register(GameObject go) {
@@ -55,28 +62,60 @@ public class PropHandler {
 			if (nameList.Contains(prop.name)) {
 				string orig = prop.name;
 				int i = 1;
-				while (nameList.Contains(prop.name + " " + i)) i++;
+				while (nameList.Contains(orig + " " + i)) i++;
 			}
 			props[prop.name] = go;
 			nameList.Add(prop.name);
+			foreach (string cat in prop.categories) registerCategory(go, cat);
+			registerCategory(go, "All");
 		}
+	}
+
+	public static void registerCategory(GameObject go, string cat)
+	{
+		List<GameObject> prefabs;
+		if (!categories.ContainsKey(cat))
+		{
+			prefabs = new List<GameObject>();
+			categories.Add(cat, prefabs);
+			categoryList.Add(cat);
+		}
+		else prefabs = categories[cat];
+		prefabs.Add(go);
+		categories[cat] = prefabs;
+
 	}
 
 	public static void track(GameObject go)
 	{
-		propObjects.Add(go);
+		Prop p = go.GetComponent<Prop>();
+		if (p.propObjectId == -1) p.propObjectId = Random.Range(0, 10000000);
+		int id = p.propObjectId;
+		if (propDict.ContainsKey(id))
+		{
+			if(propDict[id]!=null)GameObject.Destroy(propDict[id]);
+			propDict[id] = go;
+		}
+		else propDict.Add(id, go);
 	}
 
-	public static void untrack(GameObject go)
+	public static void untrack(GameObject go, bool destroy)
 	{
-		propObjects.Remove(go);
+		Prop p = go.GetComponent<Prop>();
+		propDict.Remove(p.propObjectId);
+		if (destroy) GameObject.Destroy(go);
+	}
+
+	public static void untrackAll(bool destroyAll) {
+		if (destroyAll) foreach (int key in propDict.Keys) {
+			 GameObject.Destroy(propDict[key]);
+		}
+		propDict.Clear();
 	}
 
 	public static bool snap(GameObject go) {
 		if (!usingSnap) return false;
-
-		Vector3 mid1 = Vector3.left + Vector3.forward;
-		Vector3 mid2 = Vector3.left + Vector3.back;
+		
 		Vector3[] snapTo = new Vector3[] { Vector3.left, Vector3.right, Vector3.forward, Vector3.back};
 		string str = go.transform.forward + ": ";
 		foreach (Vector3 vec in snapTo) {
@@ -90,7 +129,7 @@ public class PropHandler {
 		//if (goBox == null) return;
 		Vector3[] goVerts = getVerts(go);
 		//Plane[] goPlanes = getPlanes(goVerts, goBox);
-		Collider[] hit = Physics.OverlapSphere(go.transform.position, 2);
+		Collider[] hit = Physics.OverlapSphere(go.transform.position, 8);
 
 		float minMag = Mathf.Infinity;
 		Vector3 minDis = new Vector3(0,0,0);
@@ -112,19 +151,9 @@ public class PropHandler {
 			}
 
 		foreach (Collider coll in hit) {
-			if (!propObjects.Contains(getOldestParent(coll.gameObject))) continue;
+			if (!propDict.ContainsValue(getOldestParent(coll.gameObject))) continue;
 
 			Vector3[] hitVerts = getVerts(coll.gameObject);
-			//Plane[] hitPlanes = getPlanes(hitVerts, hitBox);
-
-			if(false)
-				foreach (Vector3 vec in hitVerts) {
-					GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-					sphere.transform.localScale /= 10f;
-					sphere.transform.position = vec;
-					spheres.Add(sphere);
-					sphere.transform.parent = go.transform;
-				}
 
 			foreach (Vector3 goVert in goVerts)
 				foreach (Vector3 hitVert in hitVerts) {
@@ -189,14 +218,6 @@ public class PropHandler {
 
 			planes[i + 1] = new Plane(-vec, bc.ClosestPointOnBounds(bc.center - vec * 5));
 			i += 2;
-			if (false)
-			{
-				sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-				sphere.transform.localScale /= 10f;
-				sphere.transform.position = bc.ClosestPointOnBounds(bc.center - vec * 5);
-				spheres.Add(sphere);
-				sphere.transform.parent = bc.transform;
-			}
 		}
 
 		return planes;
@@ -239,6 +260,7 @@ public class PropHandler {
 		//Vector3 max = bo.transform.TransformPoint(bo.center + bo.size * 0.5f) - pos;
 		//return getVerts(pos, f, r, u, min, max);
 	}
+
 	static Vector3[] getVerts(Vector3 pos, Vector3 f, Vector3 r, Vector3 u, Vector3 min, Vector3 max)
 	{
 		Vector3[] points = new Vector3[8];
@@ -251,5 +273,18 @@ public class PropHandler {
 		points[6] = pos + r * max.x + u * max.y + f * min.z;
 		points[7] = pos + r * max.x + u * max.y + f * max.z;
 		return points;
+	}
+
+	public static GameObject objectFromId(int id)
+	{
+		if (!propDict.ContainsKey(id)) return null;
+		return propDict[id];
+	}
+
+	public static Prop propFromId(int id)
+	{
+		GameObject go = objectFromId(id);
+		if (go == null) return null;
+		return go.GetComponent<Prop>();
 	}
 }
